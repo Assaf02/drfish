@@ -5,6 +5,7 @@ import { getSales } from '@/app/actions/sales';
 import { formatCFA, formatDateTime, getPaymentStatusLabel, getPaymentMethodLabel } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Fish } from 'lucide-react';
+import { FishIcon } from '@/components/icons/FishIcon';
 
 export const metadata = { title: 'Historique' };
 export const revalidate = 30;
@@ -24,7 +25,9 @@ export default async function AgentHistoryPage() {
 
       {sales.length === 0 ? (
         <div className="text-center py-16">
-          <div className="text-5xl mb-4">🐟</div>
+          <div className="flex justify-center mb-4">
+            <FishIcon size={56} color="var(--gray-100)" />
+          </div>
           <p className="text-navy font-semibold">Aucune vente enregistrée</p>
           <p className="text-gray-400 text-sm mt-1">Votre historique apparaîtra ici</p>
         </div>

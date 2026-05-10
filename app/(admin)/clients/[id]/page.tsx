@@ -39,17 +39,17 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white rounded-2xl p-4 shadow-card border border-gray-100 text-center">
-          <p className="text-2xl font-bold text-navy">{client.sales.length}</p>
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
+        <div className="bg-white rounded-2xl p-3 sm:p-4 shadow-card border border-gray-100 text-center">
+          <p className="text-xl sm:text-2xl font-bold text-navy">{client.sales.length}</p>
           <p className="text-xs text-gray-500">commandes</p>
         </div>
-        <div className="bg-white rounded-2xl p-4 shadow-card border border-gray-100 text-center">
-          <p className="text-xl font-bold text-navy">{formatCFA(client.totalSpent)}</p>
+        <div className="bg-white rounded-2xl p-3 sm:p-4 shadow-card border border-gray-100 text-center overflow-hidden">
+          <p className="text-sm sm:text-xl font-bold text-navy truncate">{formatCFA(client.totalSpent)}</p>
           <p className="text-xs text-gray-500">total dépensé</p>
         </div>
-        <div className="bg-white rounded-2xl p-4 shadow-card border border-gray-100 text-center">
-          <p className="text-2xl font-bold text-navy">{client.subscriptions.length}</p>
+        <div className="bg-white rounded-2xl p-3 sm:p-4 shadow-card border border-gray-100 text-center">
+          <p className="text-xl sm:text-2xl font-bold text-navy">{client.subscriptions.length}</p>
           <p className="text-xs text-gray-500">abonnements</p>
         </div>
       </div>

@@ -119,28 +119,29 @@ export function SubscriptionsManager({ initialSubscriptions, expiring, clients }
         ) : (
           <div className="divide-y divide-gray-50">
             {filtered.map((sub) => (
-              <div key={sub.id} className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50/50 transition-colors">
-                <div className="w-10 h-10 bg-royal/10 rounded-xl flex items-center justify-center text-royal font-bold text-sm flex-shrink-0">
+              <div key={sub.id} className="flex items-center gap-3 px-3 sm:px-5 py-4 hover:bg-gray-50/50 transition-colors">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 bg-royal/10 rounded-xl flex items-center justify-center text-royal font-bold text-sm flex-shrink-0">
                   {sub.client.name[0]}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <p className="font-semibold text-navy text-sm">{sub.client.name}</p>
-                    {sub.bonusApplied && <Badge variant="purple">+1 kg bonus</Badge>}
+                    {sub.bonusApplied && <Badge variant="purple">+1 kg</Badge>}
                   </div>
-                  <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+                  <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                     {sub.client.phone && <span className="text-xs text-gray-400 flex items-center gap-1"><Phone size={10} />{sub.client.phone}</span>}
                     <span className="text-xs text-gray-400 flex items-center gap-1">
-                      <Calendar size={10} /> Début: {formatDate(sub.startDate)}
+                      <Calendar size={10} /> {formatDate(sub.startDate)}
                     </span>
-                    {sub.endDate && <span className="text-xs text-gray-400">Fin: {formatDate(sub.endDate)}</span>}
-                    <span className="text-xs text-gray-400">{sub.weeklyDeliveries} livr./sem.</span>
+                    {sub.endDate && <span className="text-xs text-gray-400">→ {formatDate(sub.endDate)}</span>}
+                    <span className="text-xs text-gray-400">{sub.weeklyDeliveries}/sem.</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex items-center gap-1.5 flex-shrink-0">
                   <Badge variant={statusBadge[sub.status] ?? 'gray'} dot>{getSubscriptionStatusLabel(sub.status)}</Badge>
                   <button onClick={() => openEdit(sub)} className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-navy transition-colors text-xs font-medium">
-                    Modifier
+                    <span className="hidden sm:inline">Modifier</span>
+                    <span className="sm:hidden">✎</span>
                   </button>
                 </div>
               </div>

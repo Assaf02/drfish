@@ -36,20 +36,35 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        'fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%]',
-        'w-full max-w-lg bg-white rounded-2xl shadow-float p-6',
-        'data-[state=open]:animate-in data-[state=closed]:animate-out',
+        // Mobile: bottom sheet
+        'fixed inset-x-0 bottom-0 z-50 w-full bg-white rounded-t-[24px] p-6 shadow-float',
+        'max-h-[92vh] overflow-y-auto',
+        // Desktop: centered modal
+        'sm:inset-auto sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%]',
+        'sm:rounded-2xl sm:max-w-lg sm:max-h-[90vh]',
+        // Animations — mobile slides up, desktop zooms
+        'data-[state=open]:animate-in data-[state=closed]:animate-out duration-200',
         'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
-        'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
-        'data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%]',
-        'data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]',
-        'duration-200 mx-4',
+        'data-[state=open]:slide-in-from-bottom sm:data-[state=open]:slide-in-from-bottom-0',
+        'data-[state=closed]:slide-out-to-bottom sm:data-[state=closed]:slide-out-to-bottom-0',
+        'sm:data-[state=closed]:zoom-out-95 sm:data-[state=open]:zoom-in-95',
+        'sm:data-[state=open]:slide-in-from-left-1/2 sm:data-[state=open]:slide-in-from-top-[48%]',
+        'sm:data-[state=closed]:slide-out-to-left-1/2 sm:data-[state=closed]:slide-out-to-top-[48%]',
         className,
       )}
       {...props}
     >
+      {/* Mobile drag handle */}
+      <div className="sm:hidden flex justify-center mb-4 -mt-1">
+        <div className="w-10 h-1 rounded-full" style={{ background: 'var(--gray-100)' }} />
+      </div>
       {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-xl p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all">
+      <DialogPrimitive.Close
+        className="absolute right-4 top-4 rounded-xl p-2 transition-all"
+        style={{ color: 'var(--gray-400)' }}
+        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--gray-50)'; }}
+        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+      >
         <X size={16} />
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>
@@ -68,7 +83,8 @@ const DialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn('text-lg font-bold text-navy', className)}
+    className={cn('text-lg font-bold', className)}
+    style={{ color: 'var(--navy)' }}
     {...props}
   />
 ));
@@ -80,20 +96,11 @@ const DialogDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Description
     ref={ref}
-    className={cn('text-sm text-gray-500 mt-1', className)}
+    className={cn('text-sm mt-1', className)}
+    style={{ color: 'var(--gray-400)' }}
     {...props}
   />
 ));
 DialogDescription.displayName = DialogPrimitive.Description.displayName;
 
-export {
-  Dialog,
-  DialogPortal,
-  DialogOverlay,
-  DialogClose,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-};
+export { Dialog, DialogPortal, DialogOverlay, DialogClose, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription };

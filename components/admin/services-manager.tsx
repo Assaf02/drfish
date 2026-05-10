@@ -71,40 +71,42 @@ export function ServicesManager({ initialServices }: { initialServices: Service[
 
       <div className="space-y-4">
         {services.map((s) => (
-          <div key={s.id} className="bg-white rounded-2xl p-5 shadow-card border border-gray-100">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-11 h-11 bg-royal/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Scissors size={20} className="text-royal" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="font-bold text-navy text-lg">{s.name}</p>
-                    {s.isPromo && <Badge variant="green"><Tag size={10} /> Promo</Badge>}
-                    {!s.active && <Badge variant="gray">Inactif</Badge>}
-                  </div>
-                  <div className="flex items-center gap-3 mt-1">
-                    <p className="text-sm text-gray-500">
-                      Prix normal: <span className="font-semibold text-navy">{formatCFA(s.price)}</span>
-                    </p>
-                    {s.promoPrice != null && (
-                      <p className="text-sm text-gray-500">
-                        Prix promo: <span className={cn('font-semibold', s.isPromo ? 'text-success' : 'text-navy')}>{s.promoPrice === 0 ? 'Gratuit' : formatCFA(s.promoPrice)}</span>
-                      </p>
-                    )}
-                  </div>
-                </div>
+          <div key={s.id} className="bg-white rounded-2xl p-4 sm:p-5 shadow-card border border-gray-100">
+            <div className="flex items-start gap-3">
+              <div className="w-11 h-11 bg-royal/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Scissors size={20} className="text-royal" />
               </div>
-              <div className="flex items-center gap-2">
-                <button onClick={() => handleTogglePromo(s)} className={cn(
-                  'px-3 py-1.5 rounded-xl text-xs font-semibold transition-all',
-                  s.isPromo ? 'bg-success-light text-success hover:bg-success/20' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                )}>
-                  {s.isPromo ? 'Désactiver promo' : 'Activer promo'}
-                </button>
-                <button onClick={() => openEdit(s)} className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-navy transition-colors">
-                  <Edit2 size={16} />
-                </button>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-bold text-navy text-base sm:text-lg">{s.name}</p>
+                      {s.isPromo && <Badge variant="green"><Tag size={10} /> Promo</Badge>}
+                      {!s.active && <Badge variant="gray">Inactif</Badge>}
+                    </div>
+                    <div className="flex items-center gap-3 mt-1 flex-wrap">
+                      <p className="text-sm text-gray-500">
+                        Normal: <span className="font-semibold text-navy">{formatCFA(s.price)}</span>
+                      </p>
+                      {s.promoPrice != null && (
+                        <p className="text-sm text-gray-500">
+                          Promo: <span className={cn('font-semibold', s.isPromo ? 'text-success' : 'text-navy')}>{s.promoPrice === 0 ? 'Gratuit' : formatCFA(s.promoPrice)}</span>
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <button onClick={() => handleTogglePromo(s)} className={cn(
+                      'px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap',
+                      s.isPromo ? 'bg-success-light text-success hover:bg-success/20' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    )}>
+                      {s.isPromo ? 'Stop promo' : 'Promo'}
+                    </button>
+                    <button onClick={() => openEdit(s)} className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-navy transition-colors">
+                      <Edit2 size={16} />
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

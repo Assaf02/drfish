@@ -77,17 +77,17 @@ export function SalesTable({ initialSales, total, agents, products }: { initialS
   return (
     <div className="space-y-4">
       {/* Summary bar */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white rounded-2xl p-4 shadow-card border border-gray-100 text-center">
-          <p className="text-2xl font-bold text-navy">{filtered.length}</p>
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
+        <div className="bg-white rounded-2xl p-3 sm:p-4 shadow-card border border-gray-100 text-center">
+          <p className="text-xl sm:text-2xl font-bold text-navy">{filtered.length}</p>
           <p className="text-xs text-gray-500">ventes filtrées</p>
         </div>
-        <div className="bg-white rounded-2xl p-4 shadow-card border border-gray-100 text-center">
-          <p className="text-2xl font-bold text-navy">{formatCFA(totalRevenue)}</p>
+        <div className="bg-white rounded-2xl p-3 sm:p-4 shadow-card border border-gray-100 text-center overflow-hidden">
+          <p className="text-base sm:text-2xl font-bold text-navy truncate">{formatCFA(totalRevenue)}</p>
           <p className="text-xs text-gray-500">total filtré</p>
         </div>
-        <div className="bg-white rounded-2xl p-4 shadow-card border border-gray-100 text-center">
-          <p className="text-2xl font-bold text-warning">
+        <div className="bg-white rounded-2xl p-3 sm:p-4 shadow-card border border-gray-100 text-center">
+          <p className="text-xl sm:text-2xl font-bold text-warning">
             {filtered.filter((s) => s.paymentStatus === 'PENDING').length}
           </p>
           <p className="text-xs text-gray-500">en attente</p>
@@ -118,7 +118,7 @@ export function SalesTable({ initialSales, total, agents, products }: { initialS
       {/* Table */}
       <div className="bg-white rounded-2xl shadow-card border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[640px]">
             <thead>
               <tr className="border-b border-gray-100">
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Date</th>

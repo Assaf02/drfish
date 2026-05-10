@@ -4,9 +4,10 @@ import { authOptions } from '@/lib/auth';
 import { getAgentDailySummary } from '@/app/actions/sales';
 import { getAgentStats } from '@/app/actions/agents';
 import Link from 'next/link';
-import { PlusCircle, TrendingUp, Clock, Fish } from 'lucide-react';
+import { PlusCircle, TrendingUp, Clock, Fish, Sparkles } from 'lucide-react';
 import { formatCFA, formatRelative, getPaymentStatusLabel } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { FishIcon } from '@/components/icons/FishIcon';
 
 export const metadata = { title: 'Accueil' };
 export const revalidate = 30;
@@ -28,7 +29,10 @@ export default async function AgentHomePage() {
       {/* Header */}
       <div>
         <p className="text-sm text-gray-500">{greeting},</p>
-        <h1 className="text-2xl font-bold text-navy">{session.user.name} 👋</h1>
+        <h1 className="text-2xl font-bold text-navy flex items-center gap-2">
+          {session.user.name}
+          <Sparkles size={20} className="text-blue-400 opacity-70" />
+        </h1>
       </div>
 
       {/* Daily summary */}
@@ -113,7 +117,9 @@ export default async function AgentHomePage() {
 
       {summary.sales.length === 0 && (
         <div className="text-center py-8">
-          <div className="text-4xl mb-3">🐟</div>
+          <div className="flex justify-center mb-3">
+            <FishIcon size={48} color="var(--gray-100)" />
+          </div>
           <p className="text-navy font-semibold">Aucune vente aujourd&apos;hui</p>
           <p className="text-gray-400 text-sm mt-1">Appuyez sur &ldquo;Nouvelle vente&rdquo; pour commencer</p>
         </div>

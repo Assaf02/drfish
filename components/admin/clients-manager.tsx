@@ -62,8 +62,8 @@ export function ClientsManager({ initialClients }: { initialClients: Client[] })
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-3">
-        <div className="flex-1 relative">
+      <div className="flex gap-2 sm:gap-3 flex-wrap">
+        <div className="flex-1 min-w-[180px] relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher..." className="input-field pl-9 py-2.5 text-sm" />
         </div>

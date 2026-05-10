@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { TrendingUp, ShoppingCart, Star, AlertTriangle, Clock, Fish, Users } from 'lucide-react';
+import { TrendingUp, ShoppingCart, Star, AlertTriangle, Clock, Fish, Users, Sparkles } from 'lucide-react';
 import { getDashboardKPIs, getRevenueChart } from '@/app/actions/sales';
 import { getAllAgentsStats } from '@/app/actions/agents';
 import { getExpiringSubscriptions } from '@/app/actions/subscriptions';
@@ -12,6 +12,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { FishIcon } from '@/components/icons/FishIcon';
 
 export const metadata = { title: 'Dashboard' };
 export const revalidate = 60;
@@ -46,20 +47,21 @@ async function DashboardContent() {
               {todayCapitalized}
             </p>
             <h1
-              className="text-white font-extrabold"
+              className="text-white font-extrabold flex items-center gap-2"
               style={{ fontSize: 28, letterSpacing: '-0.5px', lineHeight: 1.2 }}
             >
-              Bonjour {firstName} 👋
+              Bonjour {firstName}
+              <Sparkles size={22} className="text-blue-300 opacity-80" />
             </h1>
             <p className="text-[14px] mt-1" style={{ color: 'rgba(255,255,255,0.45)' }}>
               Voici l&apos;état de Dr Fish aujourd&apos;hui
             </p>
           </div>
           <div
-            className="w-14 h-14 rounded-2xl items-center justify-center text-3xl hidden sm:flex"
+            className="w-14 h-14 rounded-2xl items-center justify-center hidden sm:flex"
             style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
           >
-            🐟
+            <FishIcon size={32} color="rgba(255,255,255,0.7)" />
           </div>
         </div>
       </div>
@@ -126,17 +128,14 @@ async function DashboardContent() {
 
           {kpis.recentSales.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-14 gap-3">
-              <span className="text-4xl">🐟</span>
+              <FishIcon size={48} color="var(--gray-100)" />
               <p className="text-[14px] font-medium" style={{ color: 'var(--gray-400)' }}>Aucune vente aujourd&apos;hui</p>
             </div>
           ) : (
-            <div style={{ borderColor: 'var(--gray-50)' }}>
+            <div>
               {kpis.recentSales.map((sale) => (
                 <div key={sale.id}
-                  className="px-5 py-3.5 flex items-center gap-4 transition-colors"
-                  style={{ borderBottom: '1px solid var(--gray-50)' }}
-                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--gray-50)'}
-                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
+                  className="px-5 py-3.5 flex items-center gap-4 transition-colors hover:bg-gray-50/70 border-b border-gray-50"
                 >
                   <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
                     style={{ background: 'rgba(46,109,180,0.08)' }}>
@@ -172,8 +171,10 @@ async function DashboardContent() {
             <p className="label mb-3">Meilleur produit</p>
             {kpis.bestProduct ? (
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl"
-                  style={{ background: 'rgba(0,180,166,0.08)' }}>🐟</div>
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center"
+                  style={{ background: 'rgba(0,180,166,0.08)' }}>
+                  <FishIcon size={22} color="var(--teal)" />
+                </div>
                 <div>
                   <p className="font-bold" style={{ fontSize: 15, color: 'var(--navy)' }}>{kpis.bestProduct.name}</p>
                   <p className="text-[12px] mt-0.5" style={{ color: 'var(--gray-400)' }}>

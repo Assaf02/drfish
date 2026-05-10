@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { X, Download } from 'lucide-react';
+import { FishIcon } from '@/components/icons/FishIcon';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -64,8 +65,8 @@ export function PWAInstallBanner() {
     <div className="fixed bottom-0 left-0 right-0 z-50 p-4 animate-slide-up">
       <div className="bg-navy rounded-2xl p-4 shadow-float border border-white/10 max-w-lg mx-auto">
         <div className="flex items-start gap-3">
-          <div className="w-11 h-11 bg-royal rounded-xl flex items-center justify-center text-xl flex-shrink-0">
-            🐟
+          <div className="w-11 h-11 bg-royal rounded-xl flex items-center justify-center flex-shrink-0">
+            <FishIcon size={22} color="white" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-white font-semibold text-sm leading-snug">

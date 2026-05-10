@@ -11,10 +11,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (session.user.role !== 'ADMIN') redirect('/home');
 
   return (
-    <div className="min-h-screen bg-surface">
+    <div className="min-h-screen" style={{ background: 'var(--off-white)' }}>
       <AdminSidebar />
-      <main className="ml-[220px] min-h-screen">
-        <div className="max-w-7xl mx-auto p-6 lg:p-8 animate-fade-in">{children}</div>
+      {/* Desktop: ml-[220px] — Mobile: ml-0 + pt-14 for top bar */}
+      <main className="lg:ml-[220px] pt-14 lg:pt-0 min-h-screen">
+        <div className="max-w-7xl mx-auto px-4 py-5 lg:p-8 animate-fade-in">
+          {children}
+        </div>
       </main>
       <PWAInstallBanner />
     </div>

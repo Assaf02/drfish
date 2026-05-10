@@ -122,7 +122,7 @@ export function SettingsManager({ settings, agents: initialAgents }: { settings:
 
       {/* Users management */}
       <div className="bg-white rounded-2xl shadow-card border border-gray-100 overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-50">
+        <div className="flex items-center justify-between gap-3 px-4 sm:px-6 py-4 border-b border-gray-50 flex-wrap">
           <div className="flex items-center gap-3">
             <Users size={18} className="text-royal" />
             <h2 className="font-bold text-navy">Gestion des utilisateurs</h2>
@@ -133,7 +133,7 @@ export function SettingsManager({ settings, agents: initialAgents }: { settings:
         </div>
         <div className="divide-y divide-gray-50">
           {agents.map((agent) => (
-            <div key={agent.id} className="flex items-center gap-4 px-6 py-4">
+            <div key={agent.id} className="flex items-center gap-3 px-4 sm:px-6 py-4">
               <div className="w-10 h-10 bg-royal/10 rounded-xl flex items-center justify-center text-royal font-bold text-sm flex-shrink-0">
                 {agent.name[0]}
               </div>

@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { DrFishLogo } from '@/components/icons/DrFishLogo';
 
 const schema = z.object({
   email: z.string().email('Email invalide'),
@@ -15,26 +16,6 @@ const schema = z.object({
   rememberMe: z.boolean().optional(),
 });
 type FormData = z.infer<typeof schema>;
-
-function FishSVG() {
-  return (
-    <svg width="48" height="48" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 32 C12 20 24 10 40 16 L56 32 L40 48 C24 54 12 44 12 32Z"
-        stroke="white" strokeWidth="2" fill="none" strokeLinejoin="round"
-        strokeDasharray="220" strokeDashoffset="220"
-        style={{ animation: 'fishDraw 1.2s cubic-bezier(0.25,0.46,0.45,0.94) 0.3s forwards' }} />
-      <path d="M56 32 L64 24 L64 40 Z"
-        stroke="white" strokeWidth="2" fill="none" strokeLinejoin="round"
-        strokeDasharray="50" strokeDashoffset="50"
-        style={{ animation: 'fishDraw 0.5s ease 1.2s forwards' }} />
-      <circle cx="24" cy="30" r="2.5" fill="white"
-        style={{ opacity: 0, animation: 'scaleIn 0.3s ease 1.6s forwards' }} />
-      <path d="M32 22 Q35 32 32 42" stroke="rgba(255,255,255,0.45)" strokeWidth="1.5" fill="none" strokeLinecap="round"
-        strokeDasharray="22" strokeDashoffset="22"
-        style={{ animation: 'fishDraw 0.4s ease 1.4s forwards' }} />
-    </svg>
-  );
-}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -84,15 +65,9 @@ export default function LoginPage() {
 
         {/* Brand */}
         <div className="text-center mb-9">
-          <div
-            className="w-[76px] h-[76px] rounded-[22px] flex items-center justify-center mx-auto mb-6"
-            style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
-          >
-            <FishSVG />
+          <div className="flex justify-center mb-5">
+            <DrFishLogo variant="white" size="lg" animated />
           </div>
-          <h1 className="text-white font-extrabold" style={{ fontSize: 34, letterSpacing: '-1px', lineHeight: 1.1 }}>
-            Dr Fish
-          </h1>
           <p className="mt-2 text-[15px]" style={{ color: 'rgba(255,255,255,0.4)' }}>
             Connectez-vous pour continuer
           </p>

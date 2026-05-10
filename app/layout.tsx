@@ -46,6 +46,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Dr Fish" />
         <meta name="msapplication-tap-highlight" content="no" />
+        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+        <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-96.png" />
       </head>
       <body>
         <Providers>

@@ -24,36 +24,36 @@ async function AgentsContent() {
         return (
           <div key={agent.id} className="bg-white rounded-2xl shadow-card border border-gray-100 overflow-hidden">
             {/* Agent header */}
-            <div className="flex items-center gap-4 px-6 py-5 border-b border-gray-50">
-              <div className="w-12 h-12 bg-gradient-to-br from-royal to-royal-700 rounded-xl flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+            <div className="flex items-center gap-3 px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-50">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 bg-gradient-to-br from-royal to-royal-700 rounded-xl flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
                 {agent.name[0]}
               </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <h2 className="font-bold text-navy text-lg">{agent.name}</h2>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="font-bold text-navy text-base sm:text-lg">{agent.name}</h2>
                   {bonusPercent > 0 && <Badge variant="green"><Award size={10} /> Bonus {bonusPercent}%</Badge>}
                 </div>
-                <p className="text-sm text-gray-400">{agent.email}</p>
+                <p className="text-sm text-gray-400 truncate">{agent.email}</p>
               </div>
-              <div className="text-right">
-                <p className="text-xl font-bold text-navy">{formatCFA(agent.salary)}</p>
+              <div className="text-right flex-shrink-0">
+                <p className="text-base sm:text-xl font-bold text-navy">{formatCFA(agent.salary)}</p>
                 <p className="text-xs text-gray-400">salaire estimé</p>
               </div>
             </div>
 
             {/* Stats grid */}
             <div className="grid grid-cols-3 divide-x divide-gray-50">
-              <div className="p-4 text-center">
-                <p className="text-2xl font-bold text-navy">{agent.ordersMonth}</p>
-                <p className="text-xs text-gray-500 mt-0.5">commandes ce mois</p>
+              <div className="p-3 sm:p-4 text-center">
+                <p className="text-xl sm:text-2xl font-bold text-navy">{agent.ordersMonth}</p>
+                <p className="text-xs text-gray-500 mt-0.5">cmd ce mois</p>
               </div>
-              <div className="p-4 text-center">
-                <p className="text-xl font-bold text-navy">{formatCFA(agent.revenueMonth)}</p>
+              <div className="p-3 sm:p-4 text-center overflow-hidden">
+                <p className="text-sm sm:text-xl font-bold text-navy truncate">{formatCFA(agent.revenueMonth)}</p>
                 <p className="text-xs text-gray-500 mt-0.5">CA ce mois</p>
               </div>
-              <div className="p-4 text-center">
-                <p className="text-xl font-bold text-navy">{formatCFA(25000)}</p>
-                <p className="text-xs text-gray-500 mt-0.5">salaire de base</p>
+              <div className="p-3 sm:p-4 text-center overflow-hidden">
+                <p className="text-sm sm:text-xl font-bold text-navy truncate">{formatCFA(25000)}</p>
+                <p className="text-xs text-gray-500 mt-0.5">salaire base</p>
               </div>
             </div>
 
