@@ -3,9 +3,6 @@ const withPWA = require('next-pwa')({
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
-  fallbacks: {
-    document: '/offline',
-  },
   runtimeCaching: [
     // Fontshare CDN — Cache First, 1 year
     {
@@ -16,7 +13,7 @@ const withPWA = require('next-pwa')({
         expiration: { maxEntries: 10, maxAgeSeconds: 365 * 24 * 60 * 60 },
       },
     },
-    // Static assets (JS, CSS, images, fonts) — Cache First
+    // Static assets — Cache First
     {
       urlPattern: /\.(?:js|css|woff2?|png|jpg|jpeg|svg|ico|webp)$/i,
       handler: 'CacheFirst',
@@ -25,7 +22,7 @@ const withPWA = require('next-pwa')({
         expiration: { maxEntries: 200, maxAgeSeconds: 30 * 24 * 60 * 60 },
       },
     },
-    // Auth endpoints — Network Only (never cache)
+    // Auth — Network Only (never cache)
     {
       urlPattern: /\/api\/auth\/.*/,
       handler: 'NetworkOnly',
@@ -40,13 +37,14 @@ const withPWA = require('next-pwa')({
         networkTimeoutSeconds: 10,
       },
     },
-    // Pages — Stale While Revalidate
+    // Pages — Network First
     {
       urlPattern: /^https?.*/,
-      handler: 'StaleWhileRevalidate',
+      handler: 'NetworkFirst',
       options: {
         cacheName: 'page-cache',
         expiration: { maxEntries: 50, maxAgeSeconds: 24 * 60 * 60 },
+        networkTimeoutSeconds: 15,
       },
     },
   ],
