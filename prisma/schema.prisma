@@ -1,0 +1,144 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      String   @default("AGENT")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sales Sale[]
+
+  @@map("users")
+}
+
+model Product {
+  id            String   @id @default(cuid())
+  name          String
+  category      String   @default("POISSON")
+  purchasePrice Float
+  sellingPrice  Float
+  unit          String   @default("kg")
+  stock         Float?
+  active        Boolean  @default(true)
+  photoUrl      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  saleItems SaleItem[]
+
+  @@map("products")
+}
+
+model Service {
+  id         String   @id @default(cuid())
+  name       String
+  price      Float
+  promoPrice Float?
+  isPromo    Boolean  @default(false)
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  saleServices SaleService[]
+
+  @@map("services")
+}
+
+model Client {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String?
+  address   String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sales         Sale[]
+  subscriptions Subscription[]
+
+  @@map("clients")
+}
+
+model Sale {
+  id            String   @id @default(cuid())
+  agentId       String
+  agent         User     @relation(fields: [agentId], references: [id])
+  clientId      String?
+  client        Client?  @relation(fields: [clientId], references: [id])
+  date          DateTime @default(now())
+  paymentStatus String   @default("PENDING")
+  paymentMethod String   @default("DIRECT")
+  notes         String?
+  totalAmount   Float
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  items    SaleItem[]
+  services SaleService[]
+
+  @@map("sales")
+}
+
+model SaleItem {
+  id         String   @id @default(cuid())
+  saleId     String
+  sale       Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id])
+  quantity   Float
+  pricePerKg Float
+  subtotal   Float
+  createdAt  DateTime @default(now())
+
+  @@map("sale_items")
+}
+
+model SaleService {
+  id        String   @id @default(cuid())
+  saleId    String
+  sale      Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  serviceId String
+  service   Service  @relation(fields: [serviceId], references: [id])
+  price     Float
+  createdAt DateTime @default(now())
+
+  @@map("sale_services")
+}
+
+model Subscription {
+  id               String    @id @default(cuid())
+  clientId         String
+  client           Client    @relation(fields: [clientId], references: [id])
+  startDate        DateTime
+  endDate          DateTime?
+  status           String    @default("ACTIVE")
+  weeklyDeliveries Int       @default(0)
+  referredBy       String?
+  bonusApplied     Boolean   @default(false)
+  notes            String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@map("subscriptions")
+}
+
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
