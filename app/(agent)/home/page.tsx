@@ -74,8 +74,19 @@ export default async function AgentHomePage() {
             <TrendingUp size={15} className="text-success" />
             <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Salaire</p>
           </div>
-          <p className="text-xl font-bold text-navy">{formatCFA(stats.salary)}</p>
-          <p className="text-xs text-gray-400">estimé ce mois</p>
+          {stats.ordersMonth < 50 ? (
+            <>
+              <p className="text-base font-bold text-gray-400">—</p>
+              <p className="text-xs text-gray-400">
+                {50 - stats.ordersMonth} cmd restantes
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-xl font-bold text-navy">{formatCFA(stats.salary)}</p>
+              <p className="text-xs text-gray-400">estimé ce mois</p>
+            </>
+          )}
         </div>
       </div>
 

@@ -20,7 +20,10 @@ async function AgentsContent() {
           <p className="text-gray-400 text-sm mt-1">Ajoutez des agents dans les Paramètres</p>
         </div>
       ) : stats.map((agent) => {
-        const bonusPercent = agent.ordersMonth >= 20 ? 10 : agent.ordersMonth >= 10 ? 5 : 0;
+        const baseUnlocked = agent.ordersMonth >= 50;
+        const bonusPercent = baseUnlocked && agent.ordersMonth >= 70 ? 10
+          : baseUnlocked && agent.ordersMonth >= 60 ? 5
+          : 0;
         return (
           <div key={agent.id} className="bg-white rounded-2xl shadow-card border border-gray-100 overflow-hidden">
             {/* Agent header */}
@@ -58,25 +61,47 @@ async function AgentsContent() {
             </div>
 
             {/* Salary breakdown */}
-            <div className="px-6 pb-5 pt-2 space-y-2 bg-gray-50/50">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Salaire de base</span>
-                <span className="font-semibold text-navy">{formatCFA(25000)}</span>
-              </div>
-              {bonusPercent > 0 && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Bonus +{bonusPercent}% ({agent.ordersMonth >= 20 ? '≥20 cmd' : '≥10 cmd'})</span>
-                  <span className="font-semibold text-success">+{formatCFA(agent.salary - 25000)}</span>
-                </div>
-              )}
-              {bonusPercent === 0 && (
-                <p className="text-xs text-gray-400">
-                  {10 - agent.ordersMonth > 0 ? `Encore ${10 - agent.ordersMonth} commandes pour le bonus +5%` : ''}
-                </p>
+            <div className="px-4 sm:px-6 pb-5 pt-2 space-y-2 bg-gray-50/50">
+              {!baseUnlocked ? (
+                <>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Salaire de base</span>
+                    <span className="font-semibold text-gray-400">Non débloqué</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                    <div
+                      className="bg-blue-400 h-1.5 rounded-full transition-all"
+                      style={{ width: `${Math.min(100, (agent.ordersMonth / 50) * 100)}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-400">
+                    Encore {50 - agent.ordersMonth} commande{50 - agent.ordersMonth > 1 ? 's' : ''} pour débloquer le salaire de base
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Salaire de base</span>
+                    <span className="font-semibold text-navy">{formatCFA(25000)}</span>
+                  </div>
+                  {bonusPercent > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Bonus +{bonusPercent}% ({agent.ordersMonth >= 70 ? '≥70 cmd' : '≥60 cmd'})</span>
+                      <span className="font-semibold text-success">+{formatCFA(agent.salary - 25000)}</span>
+                    </div>
+                  )}
+                  {bonusPercent === 0 && (
+                    <p className="text-xs text-gray-400">
+                      Encore {60 - agent.ordersMonth} commande{60 - agent.ordersMonth > 1 ? 's' : ''} pour le bonus +5%
+                    </p>
+                  )}
+                </>
               )}
               <div className="flex justify-between text-sm border-t border-gray-200 pt-2 mt-2">
                 <span className="font-bold text-navy">Total</span>
-                <span className="font-bold text-navy">{formatCFA(agent.salary)}</span>
+                <span className={`font-bold ${baseUnlocked ? 'text-navy' : 'text-gray-400'}`}>
+                  {baseUnlocked ? formatCFA(agent.salary) : formatCFA(0)}
+                </span>
               </div>
             </div>
           </div>

@@ -85,9 +85,10 @@ export function getSubscriptionStatusLabel(status: string): string {
 }
 
 export function calcSalary(orderCount: number, baseSalary = 25000): number {
+  if (orderCount < 50) return 0;
   let bonus = 0;
-  if (orderCount >= 20) bonus = baseSalary * 0.1;
-  else if (orderCount >= 10) bonus = baseSalary * 0.05;
+  if (orderCount >= 70) bonus = baseSalary * 0.1;
+  else if (orderCount >= 60) bonus = baseSalary * 0.05;
   return baseSalary + bonus;
 }
 
