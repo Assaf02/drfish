@@ -13,13 +13,6 @@ export const metadata: Metadata = {
   description: 'Gestion commerciale pour Dr Fish — livraison de poissons frais à Cotonou, Bénin',
   manifest: '/manifest.json',
   appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'Dr Fish' },
-  icons: {
-    icon: [
-      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-      { url: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
-    ],
-    apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
-  },
 };
 
 export const viewport: Viewport = {
@@ -46,9 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Dr Fish" />
         <meta name="msapplication-tap-highlight" content="no" />
-        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
-        <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg" />
-        <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-96.png" />
+        {/* apple-icon.tsx et icon.tsx génèrent automatiquement les balises icône */}
       </head>
       <body>
         <Providers>
