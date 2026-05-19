@@ -9,7 +9,9 @@ export default async function AgentLayout({ children }: { children: React.ReactN
   if (!session) redirect('/login');
 
   return (
-    <div className="min-h-screen bg-surface pb-24">
+    <div className="min-h-screen bg-surface pb-safe">
+      {/* fills the iOS status bar zone so the brand color extends behind it */}
+      <div style={{ height: 'env(safe-area-inset-top)', background: 'var(--navy)' }} />
       <main className="max-w-2xl mx-auto">{children}</main>
       <AgentBottomNav />
       <PWAInstallBanner />

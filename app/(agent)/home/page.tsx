@@ -44,7 +44,7 @@ export default async function AgentHomePage() {
             <p className="text-white/60 text-sm mt-0.5">commandes</p>
           </div>
           <div>
-            <p className="text-3xl font-bold text-white">{formatCFA(summary.totalRevenue)}</p>
+            <p className="font-bold text-white truncate" style={{ fontSize: 'clamp(18px, 5vw, 30px)' }}>{formatCFA(summary.totalRevenue)}</p>
             <p className="text-white/60 text-sm mt-0.5">chiffre d&apos;affaires</p>
           </div>
         </div>

@@ -194,6 +194,10 @@
   /* ── Safe area ── */
   .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
   .pb-safe { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+  /* top bar height = 3.5rem (56px) + status bar */
+  .pt-topbar { padding-top: calc(3.5rem + env(safe-area-inset-top)); }
+  /* agent page content top = status bar only */
+  .pt-safe-page { padding-top: calc(2rem + env(safe-area-inset-top)); }
 
   /* ── Table ── */
   .table-header-cell {

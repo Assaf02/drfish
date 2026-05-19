@@ -8,12 +8,13 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatCFA(amount: number): string {
-  return new Intl.NumberFormat('fr-BJ', {
-    style: 'currency',
-    currency: 'XOF',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
+  const n = Math.round(amount);
+  if (n >= 1_000_000) {
+    const m = n / 1_000_000;
+    const str = Number.isInteger(m) ? `${m}` : m.toFixed(1).replace('.', ',');
+    return `${str}M FCFA`;
+  }
+  return `${new Intl.NumberFormat('fr-FR').format(n)} FCFA`;
 }
 
 export function formatNumber(n: number): string {

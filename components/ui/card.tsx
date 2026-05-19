@@ -59,8 +59,8 @@ export function KPICard({
         )}
       </div>
       <p
-        className="font-extrabold leading-none"
-        style={{ fontSize: 26, color: 'var(--navy)', letterSpacing: '-1px' }}
+        className="font-extrabold leading-none truncate"
+        style={{ fontSize: 'clamp(16px, 4.5vw, 26px)', color: 'var(--navy)', letterSpacing: '-0.5px' }}
       >
         {value}
       </p>

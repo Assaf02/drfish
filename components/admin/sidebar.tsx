@@ -32,8 +32,9 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
       className="flex flex-col h-full w-[240px] lg:w-[220px]"
       style={{ background: 'var(--navy)' }}
     >
-      {/* Logo */}
-      <div className="px-5 py-5 flex items-center justify-between" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+      {/* Logo — top padding includes status bar safe area */}
+      <div className="px-5 flex items-center justify-between"
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.07)', paddingTop: 'calc(env(safe-area-inset-top) + 20px)', paddingBottom: '20px' }}>
         <div className="flex items-center gap-2">
           <DrFishLogo variant="white" size="sm" />
           <p className="text-[11px] ml-1" style={{ color: 'rgba(255,255,255,0.3)' }}>CRM</p>
@@ -104,22 +105,26 @@ export function AdminSidebar() {
     <>
       {/* ── Mobile top bar ── */}
       <header
-        className="lg:hidden fixed top-0 left-0 right-0 z-30 h-14 flex items-center justify-between px-4"
+        className="lg:hidden fixed top-0 left-0 right-0 z-30"
         style={{ background: 'var(--navy)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}
       >
-        <button
-          onClick={() => setMobileOpen(true)}
-          className="w-9 h-9 flex items-center justify-center rounded-xl text-white/70 hover:text-white transition-colors"
-          style={{ background: 'rgba(255,255,255,0.07)' }}
-        >
-          <Menu size={19} />
-        </button>
+        {/* Fills the status bar zone so background extends behind it */}
+        <div style={{ height: 'env(safe-area-inset-top)' }} />
+        <div className="h-14 flex items-center justify-between px-4">
+          <button
+            onClick={() => setMobileOpen(true)}
+            className="w-9 h-9 flex items-center justify-center rounded-xl text-white/70 hover:text-white transition-colors"
+            style={{ background: 'rgba(255,255,255,0.07)' }}
+          >
+            <Menu size={19} />
+          </button>
 
-        <DrFishLogo variant="white" size="sm" />
+          <DrFishLogo variant="white" size="sm" />
 
-        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-[12px] font-bold"
-          style={{ background: 'var(--blue)' }}>
-          {session?.user?.name?.[0]?.toUpperCase() ?? '?'}
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-[12px] font-bold"
+            style={{ background: 'var(--blue)' }}>
+            {session?.user?.name?.[0]?.toUpperCase() ?? '?'}
+          </div>
         </div>
       </header>
 
