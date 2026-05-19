@@ -238,22 +238,46 @@ export default function NewSalePage() {
                         <p className="text-xs mt-0.5" style={{ color: 'var(--gray-400)' }}>{formatCFA(product.sellingPrice)}/kg</p>
                       </div>
                       {cartItem ? (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5">
                           <button type="button" onClick={() => updateQty(product.id, -0.5)}
-                            className="w-8 h-8 rounded-xl border flex items-center justify-center active:scale-90 transition-transform"
+                            className="w-8 h-8 rounded-xl border flex items-center justify-center active:scale-90 transition-transform flex-shrink-0"
                             style={{ background: 'var(--white)', borderColor: 'var(--gray-100)' }}>
                             <Minus size={13} style={{ color: 'var(--navy)' }} />
                           </button>
-                          <span className="text-sm font-extrabold w-10 text-center" style={{ color: 'var(--navy)' }}>
-                            {cartItem.quantity}kg
-                          </span>
+                          <div className="relative">
+                            <input
+                              type="number"
+                              inputMode="decimal"
+                              min="0.1"
+                              step="0.5"
+                              value={cartItem.quantity}
+                              onChange={(e) => {
+                                const val = parseFloat(e.target.value);
+                                if (!isNaN(val) && val > 0) {
+                                  setCart((prev) => prev.map((i) =>
+                                    i.product.id === product.id
+                                      ? { ...i, quantity: Math.round(val * 10) / 10 }
+                                      : i
+                                  ));
+                                }
+                              }}
+                              className="w-16 h-8 text-center text-sm font-extrabold rounded-xl border focus:outline-none focus:border-[var(--blue)]"
+                              style={{
+                                color: 'var(--navy)',
+                                borderColor: 'var(--gray-100)',
+                                background: 'var(--white)',
+                              }}
+                            />
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] pointer-events-none"
+                              style={{ color: 'var(--gray-400)' }}>kg</span>
+                          </div>
                           <button type="button" onClick={() => updateQty(product.id, 0.5)}
-                            className="w-8 h-8 rounded-xl flex items-center justify-center active:scale-90 transition-transform"
+                            className="w-8 h-8 rounded-xl flex items-center justify-center active:scale-90 transition-transform flex-shrink-0"
                             style={{ background: 'var(--blue)' }}>
                             <Plus size={13} className="text-white" />
                           </button>
                           <button type="button" onClick={() => removeFromCart(product.id)}
-                            className="w-8 h-8 rounded-xl flex items-center justify-center active:scale-90 transition-transform ml-0.5"
+                            className="w-8 h-8 rounded-xl flex items-center justify-center active:scale-90 transition-transform ml-0.5 flex-shrink-0"
                             style={{ background: '#fee2e2' }}>
                             <X size={13} style={{ color: 'var(--red)' }} />
                           </button>
