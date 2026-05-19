@@ -86,11 +86,11 @@ export function ServicesManager({ initialServices }: { initialServices: Service[
                     </div>
                     <div className="flex items-center gap-3 mt-1 flex-wrap">
                       <p className="text-sm text-gray-500">
-                        Normal: <span className="font-semibold text-navy">{formatCFA(s.price)}</span>
+                        Normal: <span className="font-semibold text-navy">{formatCFA(s.price)}/kg</span>
                       </p>
                       {s.promoPrice != null && (
                         <p className="text-sm text-gray-500">
-                          Promo: <span className={cn('font-semibold', s.isPromo ? 'text-success' : 'text-navy')}>{s.promoPrice === 0 ? 'Gratuit' : formatCFA(s.promoPrice)}</span>
+                          Promo: <span className={cn('font-semibold', s.isPromo ? 'text-success' : 'text-navy')}>{s.promoPrice === 0 ? 'Gratuit' : `${formatCFA(s.promoPrice)}/kg`}</span>
                         </p>
                       )}
                     </div>
@@ -123,11 +123,11 @@ export function ServicesManager({ initialServices }: { initialServices: Service[
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="label">Prix normal (FCFA)</label>
+                <label className="label">Prix normal (FCFA/kg)</label>
                 <input {...register('price')} type="number" step="50" className="input-field" inputMode="numeric" />
               </div>
               <div>
-                <label className="label">Prix promo (FCFA)</label>
+                <label className="label">Prix promo (FCFA/kg)</label>
                 <input {...register('promoPrice')} type="number" step="50" className="input-field" inputMode="numeric" placeholder="0 = Gratuit" />
               </div>
             </div>

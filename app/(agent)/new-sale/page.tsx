@@ -25,10 +25,12 @@ interface PendingSale {
   notes?: string;
   cart: CartItem[];
   serviceIds: string[];
+  totalKg: number;
   total: number;
 }
 
-function getServicePrice(s: Service) {
+// Returns price per kg (promo or normal)
+function getServicePricePerKg(s: Service) {
   return s.isPromo && s.promoPrice != null ? s.promoPrice : s.price;
 }
 
@@ -91,10 +93,11 @@ export default function NewSalePage() {
 
   const selectedClient = clients.find((c) => c.id === selectedClientId);
 
+  const totalKg = cart.reduce((sum, i) => sum + i.quantity, 0);
   const itemsTotal = cart.reduce((sum, i) => sum + i.product.sellingPrice * i.quantity, 0);
   const servicesTotal = services
     .filter((s) => selectedServiceIds.has(s.id))
-    .reduce((sum, s) => sum + getServicePrice(s), 0);
+    .reduce((sum, s) => sum + getServicePricePerKg(s) * totalKg, 0);
   const formTotal = itemsTotal + servicesTotal;
 
   const filteredClients = clients.filter((c) =>
@@ -127,6 +130,7 @@ export default function NewSalePage() {
       notes: notes || undefined,
       cart: [...cart],
       serviceIds: Array.from(selectedServiceIds),
+      totalKg,
       total: formTotal,
     };
     setPendingSales((prev) => [...prev, sale]);
@@ -159,7 +163,7 @@ export default function NewSalePage() {
           })),
           services: services
             .filter((s) => sale.serviceIds.includes(s.id))
-            .map((s) => ({ serviceId: s.id, price: getServicePrice(s) })),
+            .map((s) => ({ serviceId: s.id, price: getServicePricePerKg(s) * sale.totalKg })),
         })
       ));
       setSuccessTotal(pendingTotal);
@@ -275,7 +279,8 @@ export default function NewSalePage() {
             <p className="label">Préparation</p>
             <div className="space-y-2">
               {services.map((service) => {
-                const price = getServicePrice(service);
+                const pricePerKg = getServicePricePerKg(service);
+                const computedTotal = pricePerKg * totalKg;
                 const isSelected = selectedServiceIds.has(service.id);
                 return (
                   <button type="button" key={service.id} onClick={() => toggleService(service.id)}
@@ -293,16 +298,33 @@ export default function NewSalePage() {
                     </div>
                     <div className="flex-1">
                       <p className="font-semibold text-sm" style={{ color: 'var(--navy)' }}>{service.name}</p>
-                      {service.isPromo && <p className="text-xs font-medium" style={{ color: 'var(--green)' }}>Promo active</p>}
+                      <p className="text-xs mt-0.5" style={{ color: 'var(--gray-400)' }}>
+                        {service.isPromo && service.promoPrice != null ? (
+                          <span>
+                            <span className="line-through mr-1">{formatCFA(service.price)}/kg</span>
+                            <span style={{ color: 'var(--green)' }}>
+                              {service.promoPrice === 0 ? 'Gratuit' : `${formatCFA(service.promoPrice)}/kg`}
+                            </span>
+                          </span>
+                        ) : (
+                          `${formatCFA(pricePerKg)}/kg`
+                        )}
+                      </p>
                     </div>
                     <div className="text-right">
-                      {service.isPromo && service.promoPrice != null ? (
+                      {totalKg > 0 ? (
                         <>
-                          <p className="text-[11px] line-through" style={{ color: 'var(--gray-400)' }}>{formatCFA(service.price)}</p>
-                          <p className="text-sm font-extrabold" style={{ color: 'var(--green)' }}>{price === 0 ? 'Gratuit' : formatCFA(price)}</p>
+                          <p className="text-sm font-extrabold" style={{ color: isSelected ? 'var(--green)' : 'var(--navy)' }}>
+                            {computedTotal === 0 ? 'Gratuit' : formatCFA(computedTotal)}
+                          </p>
+                          <p className="text-[10px]" style={{ color: 'var(--gray-400)' }}>
+                            pour {totalKg} kg
+                          </p>
                         </>
                       ) : (
-                        <p className="text-sm font-extrabold" style={{ color: 'var(--navy)' }}>{formatCFA(price)}</p>
+                        <p className="text-sm font-semibold" style={{ color: 'var(--gray-400)' }}>
+                          — /kg
+                        </p>
                       )}
                     </div>
                   </button>
