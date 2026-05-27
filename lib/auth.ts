@@ -13,7 +13,9 @@ export const authOptions: NextAuthOptions = {
     error: '/login',
   },
   providers: [
+    // Admin / Agent login (email + password)
     CredentialsProvider({
+      id: 'credentials',
       name: 'credentials',
       credentials: {
         email: { label: 'Email', type: 'email' },
@@ -39,12 +41,45 @@ export const authOptions: NextAuthOptions = {
         };
       },
     }),
+    // Partner login (username + referral code as password)
+    CredentialsProvider({
+      id: 'partner',
+      name: 'partner',
+      credentials: {
+        username: { label: 'Nom utilisateur', type: 'text' },
+        code: { label: 'Code parrainage', type: 'text' },
+      },
+      async authorize(credentials) {
+        if (!credentials?.username || !credentials?.code) return null;
+
+        const ref = await prisma.referralCode.findFirst({
+          where: {
+            username: credentials.username.toLowerCase(),
+            code: credentials.code.toUpperCase(),
+            status: true,
+          },
+        });
+
+        if (!ref) return null;
+
+        return {
+          id: ref.id,
+          email: `${ref.username}@partner.drfish`,
+          name: ref.name,
+          role: 'PARTNER',
+          referralCodeId: ref.id,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any;
+      },
+    }),
   ],
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.role = (user as unknown as { role: string }).role;
+        const u = user as unknown as { referralCodeId?: string };
+        if (u.referralCodeId) token.referralCodeId = u.referralCodeId;
       }
       return token;
     },
@@ -52,6 +87,10 @@ export const authOptions: NextAuthOptions = {
       if (token) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
+        if (token.referralCodeId) {
+          (session.user as unknown as { referralCodeId: string }).referralCodeId =
+            token.referralCodeId as string;
+        }
       }
       return session;
     },

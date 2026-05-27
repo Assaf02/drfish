@@ -72,23 +72,44 @@ model Client {
 }
 
 model Sale {
-  id            String   @id @default(cuid())
-  agentId       String
-  agent         User     @relation(fields: [agentId], references: [id])
-  clientId      String?
-  client        Client?  @relation(fields: [clientId], references: [id])
-  date          DateTime @default(now())
-  paymentStatus String   @default("PENDING")
-  paymentMethod String   @default("DIRECT")
-  notes         String?
-  totalAmount   Float
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id             String        @id @default(cuid())
+  agentId        String
+  agent          User          @relation(fields: [agentId], references: [id])
+  clientId       String?
+  client         Client?       @relation(fields: [clientId], references: [id])
+  referralCodeId String?
+  referralCode   ReferralCode? @relation(fields: [referralCodeId], references: [id])
+  commission     Float?
+  date           DateTime      @default(now())
+  paymentStatus  String        @default("PENDING")
+  paymentMethod  String        @default("DIRECT")
+  notes          String?
+  totalAmount    Float
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   items    SaleItem[]
   services SaleService[]
 
   @@map("sales")
+}
+
+model ReferralCode {
+  id                    String   @id @default(cuid())
+  code                  String   @unique
+  name                  String
+  username              String   @unique
+  commissionWithService Float    @default(10)
+  commissionNoService   Float    @default(5)
+  status                Boolean  @default(true)
+  notes                 String?
+  whatsappLink          String
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  orders Sale[]
+
+  @@map("referral_codes")
 }
 
 model SaleItem {

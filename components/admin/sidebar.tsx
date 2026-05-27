@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
 import {
   LayoutDashboard, Fish, Scissors, ShoppingCart,
-  Users, Star, BarChart3, Settings, LogOut, Menu, X,
+  Users, Star, BarChart3, Settings, LogOut, Menu, X, QrCode,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DrFishLogo } from '@/components/icons/DrFishLogo';
@@ -19,6 +19,7 @@ const navItems = [
   { href: '/clients',       label: 'Clients',      icon: Users },
   { href: '/subscriptions', label: 'Abonnements',  icon: Star },
   { href: '/agents',        label: 'Agents',       icon: BarChart3 },
+  { href: '/referrals',     label: 'Parrainage',   icon: QrCode },
   { href: '/settings',      label: 'Paramètres',   icon: Settings },
 ];
 

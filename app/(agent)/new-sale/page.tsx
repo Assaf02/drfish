@@ -1,17 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
-import { Loader2, Check, Plus, Minus, Fish, X, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Loader2, Check, Plus, Minus, Fish, X, Trash2, ChevronDown, ChevronUp, Tag } from 'lucide-react';
 import { getProducts } from '@/app/actions/products';
 import { getServices } from '@/app/actions/services';
 import { getClients } from '@/app/actions/clients';
 import { createSale } from '@/app/actions/sales';
+import { getActiveReferralCodes, validateReferralCode } from '@/app/actions/referrals';
 import { formatCFA, cn, getCategoryLabel } from '@/lib/utils';
 
 type Product = { id: string; name: string; sellingPrice: number; category: string };
 type Service = { id: string; name: string; price: number; promoPrice: number | null; isPromo: boolean };
 type Client = { id: string; name: string; phone: string | null };
+type ActiveRef = { id: string; code: string; name: string };
 
 interface CartItem { product: Product; quantity: number }
 
@@ -23,6 +25,7 @@ interface PendingSale {
   paymentStatus: 'PAID' | 'PENDING';
   paymentMethod: 'DIRECT' | 'WHATSAPP' | 'WEBSITE';
   notes?: string;
+  referralCode?: string;
   cart: CartItem[];
   serviceIds: string[];
   totalKg: number;
@@ -38,6 +41,7 @@ export default function NewSalePage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
+  const [activeRefs, setActiveRefs] = useState<ActiveRef[]>([]);
 
   // Form state (Section A)
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -50,6 +54,11 @@ export default function NewSalePage() {
   const [paymentStatus, setPaymentStatus] = useState<'PAID' | 'PENDING'>('PAID');
   const [paymentMethod, setPaymentMethod] = useState<'DIRECT' | 'WHATSAPP' | 'WEBSITE'>('DIRECT');
   const [notes, setNotes] = useState('');
+  const [referralInput, setReferralInput] = useState('');
+  const [referralStatus, setReferralStatus] = useState<'idle' | 'valid' | 'invalid'>('idle');
+  const [referralName, setReferralName] = useState('');
+  const [showRefSuggestions, setShowRefSuggestions] = useState(false);
+  const referralDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Pending list (Section B)
   const [pendingSales, setPendingSales] = useState<PendingSale[]>([]);
@@ -58,12 +67,32 @@ export default function NewSalePage() {
   const [successTotal, setSuccessTotal] = useState(0);
 
   useEffect(() => {
-    Promise.all([getProducts(), getServices(), getClients()]).then(([p, s, c]) => {
+    Promise.all([getProducts(), getServices(), getClients(), getActiveReferralCodes()]).then(([p, s, c, r]) => {
       setProducts(p);
       setServices(s);
       setClients(c as Client[]);
+      setActiveRefs(r);
     });
   }, []);
+
+  const handleReferralChange = (val: string) => {
+    setReferralInput(val);
+    setReferralStatus('idle');
+    setReferralName('');
+    if (referralDebounce.current) clearTimeout(referralDebounce.current);
+    if (!val.trim()) { setShowRefSuggestions(false); return; }
+    setShowRefSuggestions(true);
+    referralDebounce.current = setTimeout(async () => {
+      const ref = await validateReferralCode(val.trim().toUpperCase());
+      if (ref) {
+        setReferralStatus('valid');
+        setReferralName(ref.name);
+        setShowRefSuggestions(false);
+      } else {
+        setReferralStatus('invalid');
+      }
+    }, 600);
+  };
 
   const categories = Array.from(new Set(products.map((p) => p.category)));
 
@@ -116,6 +145,10 @@ export default function NewSalePage() {
     setNotes('');
     setPaymentStatus('PAID');
     setPaymentMethod('DIRECT');
+    setReferralInput('');
+    setReferralStatus('idle');
+    setReferralName('');
+    setShowRefSuggestions(false);
   };
 
   const handleAjouter = () => {
@@ -128,6 +161,7 @@ export default function NewSalePage() {
       paymentStatus,
       paymentMethod,
       notes: notes || undefined,
+      referralCode: referralStatus === 'valid' ? referralInput.trim().toUpperCase() : undefined,
       cart: [...cart],
       serviceIds: Array.from(selectedServiceIds),
       totalKg,
@@ -154,6 +188,7 @@ export default function NewSalePage() {
           paymentStatus: sale.paymentStatus,
           paymentMethod: sale.paymentMethod,
           notes: sale.notes,
+          referralCode: sale.referralCode,
           totalAmount: sale.total,
           items: sale.cart.map((item) => ({
             productId: item.product.id,
@@ -460,6 +495,59 @@ export default function NewSalePage() {
         {/* Notes */}
         <textarea value={notes} onChange={(e) => setNotes(e.target.value)}
           placeholder="Notes (optionnel)..." rows={2} className="input-field text-sm" style={{ resize: 'none' }} />
+
+        {/* Referral code */}
+        <div>
+          <p className="label">Code parrainage (optionnel)</p>
+          <div className="relative">
+            <div className="absolute left-3.5 top-1/2 -translate-y-1/2">
+              <Tag size={14} style={{ color: 'var(--gray-400)' }} />
+            </div>
+            <input
+              value={referralInput}
+              onChange={(e) => handleReferralChange(e.target.value)}
+              placeholder="Ex: DRFISH-KOFI-2026"
+              className="input-field text-sm pl-9 uppercase"
+              style={{ letterSpacing: '0.05em' }}
+            />
+          </div>
+          {/* Suggestions dropdown */}
+          {showRefSuggestions && activeRefs.length > 0 && (
+            <div className="mt-1 rounded-xl border overflow-hidden" style={{ borderColor: 'var(--gray-100)', background: 'var(--white)' }}>
+              {activeRefs
+                .filter((r) => r.code.toLowerCase().includes(referralInput.toLowerCase()))
+                .slice(0, 5)
+                .map((r) => (
+                  <button
+                    key={r.id}
+                    type="button"
+                    onClick={() => {
+                      setReferralInput(r.code);
+                      setReferralStatus('valid');
+                      setReferralName(r.name);
+                      setShowRefSuggestions(false);
+                    }}
+                    className="w-full px-4 py-2.5 text-left flex items-center justify-between border-b last:border-0 transition-colors hover:bg-[var(--gray-50)]"
+                    style={{ borderColor: 'var(--gray-50)' }}
+                  >
+                    <span className="text-sm font-mono font-semibold" style={{ color: 'var(--navy)' }}>{r.code}</span>
+                    <span className="text-xs" style={{ color: 'var(--gray-400)' }}>{r.name}</span>
+                  </button>
+                ))}
+            </div>
+          )}
+          {/* Status feedback */}
+          {referralStatus === 'valid' && (
+            <p className="text-xs mt-1.5 font-semibold flex items-center gap-1" style={{ color: 'var(--green)' }}>
+              <Check size={12} /> Code valide — {referralName}
+            </p>
+          )}
+          {referralStatus === 'invalid' && (
+            <p className="text-xs mt-1.5 font-semibold flex items-center gap-1" style={{ color: 'var(--red)' }}>
+              <X size={12} /> Code invalide
+            </p>
+          )}
+        </div>
 
         {/* Ajouter button */}
         <button type="button" onClick={handleAjouter}

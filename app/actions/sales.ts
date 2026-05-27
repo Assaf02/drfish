@@ -31,6 +31,7 @@ const saleSchema = z.object({
   totalAmount: z.number().positive(),
   items: z.array(saleItemSchema).min(1, 'Au moins un produit requis'),
   services: z.array(saleServiceSchema).optional().default([]),
+  referralCode: z.string().optional().nullable(),
 });
 
 export type SaleInput = z.infer<typeof saleSchema>;
@@ -53,10 +54,30 @@ export async function createSale(data: SaleInput) {
     clientId = client.id;
   }
 
+  // Resolve referral code + calculate commission
+  let referralCodeId: string | undefined;
+  let commission: number | undefined;
+  if (validated.referralCode) {
+    const ref = await prisma.referralCode.findUnique({
+      where: { code: validated.referralCode },
+    });
+    if (ref && ref.status) {
+      referralCodeId = ref.id;
+      const hasServices = (validated.services?.length ?? 0) > 0;
+      const rate = hasServices
+        ? ref.commissionWithService / 100
+        : ref.commissionNoService / 100;
+      const productTotal = validated.items.reduce((s, i) => s + i.subtotal, 0);
+      commission = Math.round(productTotal * rate);
+    }
+  }
+
   const sale = await prisma.sale.create({
     data: {
       agentId: session.user.id,
       clientId,
+      referralCodeId,
+      commission,
       date: validated.date ? new Date(validated.date) : new Date(),
       paymentStatus: validated.paymentStatus,
       paymentMethod: validated.paymentMethod,
