@@ -44,9 +44,9 @@ type RefInfo = {
 };
 
 export function PartnerDashboardClient({
-  ref, stats, orders,
+  refInfo, stats, orders,
 }: {
-  ref: RefInfo;
+  refInfo: RefInfo;
   stats: Stats;
   orders: Order[];
 }) {
@@ -54,7 +54,7 @@ export function PartnerDashboardClient({
   const [codeCopied, setCodeCopied] = useState(false);
 
   const copyCode = () => {
-    navigator.clipboard.writeText(ref.code);
+    navigator.clipboard.writeText(refInfo.code);
     setCodeCopied(true);
     toast.success('Code copié !');
     setTimeout(() => setCodeCopied(false), 2000);
@@ -116,7 +116,7 @@ export function PartnerDashboardClient({
             {greeting},
           </p>
           <h1 className="font-extrabold text-white mb-4" style={{ fontSize: 24, letterSpacing: '-0.5px' }}>
-            {ref.name}
+            {refInfo.name}
           </h1>
           {/* Code display */}
           <div
@@ -129,7 +129,7 @@ export function PartnerDashboardClient({
                 Votre code de parrainage
               </p>
               <p className="font-extrabold font-mono tracking-widest text-white" style={{ fontSize: 17 }}>
-                {ref.code}
+                {refInfo.code}
               </p>
             </div>
             <button

@@ -3,8 +3,7 @@ import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { getPartnerStats } from '@/app/actions/referrals';
 import { prisma } from '@/lib/prisma';
-import { formatCFA, formatDate } from '@/lib/utils';
-import { FishIcon } from '@/components/icons/FishIcon';
+import { formatDate } from '@/lib/utils';
 import { PartnerDashboardClient } from './client';
 
 export const metadata = { title: 'Mon espace partenaire — Dr Fish' };
@@ -39,7 +38,7 @@ export default async function PartnerDashboardPage() {
 
   return (
     <PartnerDashboardClient
-      ref={ref}
+      refInfo={ref}
       stats={{
         totalOrders: stats.totalOrders,
         totalRevenue: stats.totalRevenue,

@@ -164,7 +164,7 @@ function ReferralForm({
   );
 }
 
-function ReferralCard({ ref: r, onRefresh }: { ref: Ref; onRefresh: () => void }) {
+function ReferralCard({ data: r, onRefresh }: { data: Ref; onRefresh: () => void }) {
   const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
   const [, startTransition] = useTransition();
@@ -477,7 +477,7 @@ export default function ReferralsPage() {
       ) : (
         <div className="space-y-3">
           {refs.map((r) => (
-            <ReferralCard key={r.id} ref={r} onRefresh={load} />
+            <ReferralCard key={r.id} data={r} onRefresh={load} />
           ))}
         </div>
       )}
