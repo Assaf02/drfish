@@ -68,6 +68,8 @@ export const authOptions: NextAuthOptions = {
           name: ref.name,
           role: 'PARTNER',
           referralCodeId: ref.id,
+          partnerLevel: ref.level,
+          parentCodeId: ref.parentCodeId ?? null,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any;
       },
@@ -78,8 +80,10 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.role = (user as unknown as { role: string }).role;
-        const u = user as unknown as { referralCodeId?: string };
+        const u = user as unknown as { referralCodeId?: string; partnerLevel?: number; parentCodeId?: string | null };
         if (u.referralCodeId) token.referralCodeId = u.referralCodeId;
+        if (u.partnerLevel !== undefined) token.partnerLevel = u.partnerLevel;
+        if (u.parentCodeId !== undefined) token.parentCodeId = u.parentCodeId;
       }
       return token;
     },
@@ -88,8 +92,14 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
         if (token.referralCodeId) {
-          (session.user as unknown as { referralCodeId: string }).referralCodeId =
-            token.referralCodeId as string;
+          const u = session.user as unknown as {
+            referralCodeId: string;
+            partnerLevel: number;
+            parentCodeId: string | null;
+          };
+          u.referralCodeId = token.referralCodeId as string;
+          u.partnerLevel = (token.partnerLevel ?? 0) as number;
+          u.parentCodeId = (token.parentCodeId ?? null) as string | null;
         }
       }
       return session;

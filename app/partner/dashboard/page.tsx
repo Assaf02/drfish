@@ -1,8 +1,7 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
-import { getPartnerStats } from '@/app/actions/referrals';
-import { prisma } from '@/lib/prisma';
+import { getPartnerPortalData } from '@/app/actions/referrals';
 import { formatDate } from '@/lib/utils';
 import { PartnerDashboardClient } from './client';
 
@@ -13,46 +12,43 @@ export default async function PartnerDashboardPage() {
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== 'PARTNER') redirect('/partner/login');
 
-  const referralCodeId = (session.user as unknown as { referralCodeId: string }).referralCodeId;
+  const u = session.user as unknown as {
+    referralCodeId: string;
+    partnerLevel: number;
+  };
 
-  const [ref, stats] = await Promise.all([
-    prisma.referralCode.findUnique({
-      where: { id: referralCodeId },
-      select: { id: true, code: true, name: true, username: true, whatsappLink: true,
-        commissionWithService: true, commissionNoService: true },
-    }),
-    getPartnerStats(referralCodeId),
-  ]);
+  const data = await getPartnerPortalData(u.referralCodeId);
+  if (!data) redirect('/partner/login');
 
-  if (!ref) redirect('/partner/login');
-
-  // Prepare orders for table
-  const orders = stats.orders.map((o) => ({
+  const orders = data.orders.map((o) => ({
     id: o.id,
     date: formatDate(o.date),
-    products: o.items.map((i) => i.product.name).join(', '),
+    products: o.products,
     totalAmount: o.totalAmount,
-    hasServices: o.services.length > 0,
-    commission: o.commission ?? 0,
+    hasServices: o.hasServices,
   }));
 
   return (
     <PartnerDashboardClient
-      refInfo={ref}
+      partnerLevel={u.partnerLevel}
+      refInfo={{
+        id: data.id,
+        code: data.code,
+        name: data.name,
+        username: data.username,
+        whatsappLink: data.whatsappLink,
+        level: data.level,
+      }}
       stats={{
-        totalOrders: stats.totalOrders,
-        totalRevenue: stats.totalRevenue,
-        totalCommission: stats.totalCommission,
-        monthOrders: stats.monthOrders,
-        monthCommission: stats.monthCommission,
-        monthWithServicesCount: stats.monthWithServicesCount,
-        monthNoServicesCount: stats.monthNoServicesCount,
-        monthWithServicesCommission: stats.monthWithServicesCommission,
-        monthNoServicesCommission: stats.monthNoServicesCommission,
-        commissionWithServiceRate: stats.commissionWithServiceRate,
-        commissionNoServiceRate: stats.commissionNoServiceRate,
+        totalDirectOrders: data.totalDirectOrders,
+        totalDirectRevenue: data.totalDirectRevenue,
+        monthDirectOrders: data.monthDirectOrders,
+        monthDirectRevenue: data.monthDirectRevenue,
+        totalSubOrders: data.totalSubOrders,
+        monthSubOrders: data.monthSubOrders,
       }}
       orders={orders}
+      subCodes={data.subCodes}
     />
   );
 }
