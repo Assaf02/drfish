@@ -16,6 +16,7 @@ import { fr } from 'date-fns/locale';
 
 interface DataPoint {
   date: string;
+  label?: string;
   revenue: number;
   orders: number;
 }
@@ -44,7 +45,7 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Array<
 export function RevenueChart({ data, type = 'area' }: { data: DataPoint[]; type?: 'area' | 'bar' }) {
   const formatted = data.map((d) => ({
     ...d,
-    label: format(new Date(d.date), 'EEE', { locale: fr }),
+    label: d.label ?? format(new Date(d.date), 'EEE', { locale: fr }),
   }));
 
   if (type === 'bar') {

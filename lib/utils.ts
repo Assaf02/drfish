@@ -1,7 +1,36 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { format, formatDistanceToNow, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
+import { format, formatDistanceToNow, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
+
+export type Period = 'today' | '7d' | '30d' | 'month' | 'custom';
+
+export function periodToDateRange(period: string): { from: Date; to: Date } {
+  const now = new Date();
+  switch (period) {
+    case 'today':  return { from: startOfDay(now), to: endOfDay(now) };
+    case '7d':     return { from: startOfDay(subDays(now, 6)), to: endOfDay(now) };
+    case 'month':  return { from: startOfMonth(now), to: endOfMonth(now) };
+    default:       return { from: startOfDay(subDays(now, 29)), to: endOfDay(now) }; // 30d
+  }
+}
+
+export function getPeriodLabel(period: string, fromISO?: string, toISO?: string): string {
+  switch (period) {
+    case 'today':  return "Aujourd'hui";
+    case '7d':     return '7 derniers jours';
+    case '30d':    return '30 derniers jours';
+    case 'month':  return 'Ce mois';
+    case 'custom':
+      if (fromISO && toISO) {
+        const f = format(new Date(fromISO + 'T12:00:00'), 'd MMM', { locale: fr });
+        const t = format(new Date(toISO + 'T12:00:00'), 'd MMM yyyy', { locale: fr });
+        return `${f} – ${t}`;
+      }
+      return 'Période personnalisée';
+    default: return '30 derniers jours';
+  }
+}
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

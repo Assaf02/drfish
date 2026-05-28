@@ -4,7 +4,9 @@ import { revalidatePath } from 'next/cache';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { getDateRange } from '@/lib/utils';
+import { getDateRange, formatDate, formatRelative } from '@/lib/utils';
+import { addDays, format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 import { z } from 'zod';
 
@@ -294,4 +296,161 @@ export async function deleteSale(id: string) {
   await prisma.sale.delete({ where: { id } });
   revalidatePath('/sales');
   return { success: true };
+}
+
+// ── Dashboard unified data action ─────────────────────────────────────────────
+
+export async function getDashboardData(fromISO: string, toISO: string) {
+  const session = await getServerSession(authOptions);
+  if (session?.user?.role !== 'ADMIN') throw new Error('Unauthorized');
+
+  const from = new Date(fromISO);
+  const to   = new Date(toISO);
+
+  const [sales, expiringRaw, activeSubCount] = await Promise.all([
+    prisma.sale.findMany({
+      where: { date: { gte: from, lte: to } },
+      include: {
+        items: { include: { product: { select: { name: true, purchasePrice: true } } } },
+        agent:    { select: { id: true, name: true } },
+        client:   { select: { name: true } },
+        services: { select: { id: true } },
+      },
+      orderBy: { date: 'desc' },
+    }),
+    prisma.subscription.findMany({
+      where: { status: 'ACTIVE', endDate: { lte: addDays(new Date(), 7) } },
+      include: { client: { select: { name: true } } },
+      orderBy: { endDate: 'asc' },
+    }),
+    prisma.subscription.count({ where: { status: 'ACTIVE' } }),
+  ]);
+
+  // KPIs
+  const revenue      = sales.reduce((s, o) => s + o.totalAmount, 0);
+  const orders       = sales.length;
+  const pendingOrders = sales.filter((s) => s.paymentStatus === 'PENDING').length;
+
+  // Margin
+  let totalCost = 0;
+  sales.forEach((sale) => {
+    sale.items.forEach((item) => { totalCost += item.product.purchasePrice * item.quantity; });
+  });
+  const margin = revenue > 0 ? ((revenue - totalCost) / revenue) * 100 : 0;
+
+  // Best product
+  const productMap: Record<string, { name: string; quantity: number }> = {};
+  sales.forEach((sale) => {
+    sale.items.forEach((item) => {
+      const k = item.product.name;
+      if (!productMap[k]) productMap[k] = { name: k, quantity: 0 };
+      productMap[k].quantity += item.quantity;
+    });
+  });
+  const bestProduct = Object.values(productMap).sort((a, b) => b.quantity - a.quantity)[0] ?? null;
+
+  // Recent sales — all fields pre-serialized
+  const recentSales = sales.slice(0, 10).map((sale) => ({
+    id:            sale.id,
+    dateStr:       formatDate(sale.date),
+    relativeStr:   formatRelative(sale.date),
+    totalAmount:   sale.totalAmount,
+    paymentStatus: sale.paymentStatus,
+    agentName:     sale.agent.name,
+    clientName:    sale.client?.name ?? null,
+    products:      sale.items.map((i) => i.product.name).join(', '),
+  }));
+
+  // Chart data
+  const diffDays = Math.round((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24));
+  const chartData = buildChartPoints(sales, from, to, diffDays);
+
+  // Agent stats
+  const agentMap: Record<string, { id: string; name: string; orders: number; revenue: number }> = {};
+  sales.forEach((sale) => {
+    const id = sale.agent.id;
+    if (!agentMap[id]) agentMap[id] = { id, name: sale.agent.name, orders: 0, revenue: 0 };
+    agentMap[id].orders++;
+    agentMap[id].revenue += sale.totalAmount;
+  });
+  const agentsStats = Object.values(agentMap).sort((a, b) => b.revenue - a.revenue);
+
+  return {
+    revenue,
+    orders,
+    pendingOrders,
+    margin,
+    bestProduct,
+    recentSales,
+    chartData,
+    agentsStats,
+    activeSubscriptions: activeSubCount,
+    expiringSubscriptions: expiringRaw.map((sub) => ({
+      id:         sub.id,
+      clientName: sub.client.name,
+      endDateStr: sub.endDate ? formatDate(sub.endDate) : '—',
+    })),
+  };
+}
+
+function buildChartPoints(
+  sales: Array<{ date: Date; totalAmount: number }>,
+  from: Date,
+  to: Date,
+  diffDays: number,
+): Array<{ date: string; label: string; revenue: number; orders: number }> {
+  if (diffDays === 0) {
+    // Hourly — today only
+    const byHour = Array.from({ length: 24 }, () => ({ revenue: 0, orders: 0 }));
+    sales.forEach((s) => { const h = new Date(s.date).getHours(); byHour[h].revenue += s.totalAmount; byHour[h].orders++; });
+    return byHour.map((h, i) => ({
+      date:    `${String(i).padStart(2, '0')}:00`,
+      label:   `${String(i).padStart(2, '0')}h`,
+      revenue: h.revenue,
+      orders:  h.orders,
+    }));
+  }
+
+  if (diffDays <= 60) {
+    // Daily — iterate days in range
+    const dayMap: Record<string, { revenue: number; orders: number }> = {};
+    const cursor = new Date(from);
+    cursor.setHours(0, 0, 0, 0);
+    while (cursor <= to) {
+      dayMap[cursor.toISOString().split('T')[0]] = { revenue: 0, orders: 0 };
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    sales.forEach((s) => {
+      const key = new Date(s.date).toISOString().split('T')[0];
+      if (dayMap[key]) { dayMap[key].revenue += s.totalAmount; dayMap[key].orders++; }
+    });
+    return Object.entries(dayMap).map(([date, v]) => ({
+      date,
+      label: diffDays <= 14
+        ? format(new Date(date + 'T12:00:00'), 'EEE', { locale: fr })
+        : format(new Date(date + 'T12:00:00'), 'dd/MM', { locale: fr }),
+      ...v,
+    }));
+  }
+
+  // Weekly — group by Monday
+  const weekMap: Record<string, { revenue: number; orders: number }> = {};
+  sales.forEach((s) => {
+    const d = new Date(s.date);
+    const day = d.getDay();
+    const ws  = new Date(d);
+    ws.setDate(d.getDate() - day + (day === 0 ? -6 : 1));
+    ws.setHours(0, 0, 0, 0);
+    const key = ws.toISOString().split('T')[0];
+    if (!weekMap[key]) weekMap[key] = { revenue: 0, orders: 0 };
+    weekMap[key].revenue += s.totalAmount;
+    weekMap[key].orders++;
+  });
+  return Object.entries(weekMap)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, v]) => ({
+      date,
+      label: format(new Date(date + 'T12:00:00'), 'dd MMM', { locale: fr }),
+      ...v,
+    }));
 }
