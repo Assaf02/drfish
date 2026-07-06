@@ -6,21 +6,23 @@ import { usePathname } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
 import {
   LayoutDashboard, Fish, Scissors, ShoppingCart,
-  Users, Star, BarChart3, Settings, LogOut, Menu, X, QrCode,
+  Users, Star, BarChart3, Settings, LogOut, Menu, X, QrCode, MessageCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DrFishLogo } from '@/components/icons/DrFishLogo';
+import { GowaStatusDot } from '@/components/GowaStatus';
 
 const navItems = [
-  { href: '/dashboard',     label: 'Dashboard',   icon: LayoutDashboard },
-  { href: '/products',      label: 'Produits',     icon: Fish },
-  { href: '/services',      label: 'Services',     icon: Scissors },
-  { href: '/sales',         label: 'Ventes',       icon: ShoppingCart },
-  { href: '/clients',       label: 'Clients',      icon: Users },
-  { href: '/subscriptions', label: 'Abonnements',  icon: Star },
-  { href: '/agents',        label: 'Agents',       icon: BarChart3 },
-  { href: '/referrals',     label: 'Parrainage',   icon: QrCode },
-  { href: '/settings',      label: 'Paramètres',   icon: Settings },
+  { href: '/dashboard',     label: 'Dashboard',      icon: LayoutDashboard, badge: null },
+  { href: '/products',      label: 'Produits',        icon: Fish,            badge: null },
+  { href: '/services',      label: 'Services',        icon: Scissors,        badge: null },
+  { href: '/sales',         label: 'Ventes',          icon: ShoppingCart,    badge: null },
+  { href: '/clients',       label: 'Clients',         icon: Users,           badge: null },
+  { href: '/subscriptions', label: 'Abonnements',     icon: Star,            badge: null },
+  { href: '/agents',        label: 'Agents',          icon: BarChart3,       badge: null },
+  { href: '/referrals',     label: 'Parrainage',      icon: QrCode,          badge: null },
+  { href: '/campaigns',     label: 'Campagnes WA',    icon: MessageCircle,   badge: 'gowa' },
+  { href: '/settings',      label: 'Paramètres',      icon: Settings,        badge: null },
 ];
 
 function SidebarContent({ onClose }: { onClose?: () => void }) {
@@ -49,7 +51,7 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto no-scrollbar">
-        {navItems.map(({ href, label, icon: Icon }) => {
+        {navItems.map(({ href, label, icon: Icon, badge }) => {
           const isActive = pathname === href || pathname.startsWith(href + '/');
           return (
             <Link
@@ -65,7 +67,8 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
             >
               <Icon size={16} className="flex-shrink-0"
                 style={{ color: isActive ? 'var(--blue-light)' : 'rgba(255,255,255,0.4)' }} />
-              <span>{label}</span>
+              <span className="flex-1">{label}</span>
+              {badge === 'gowa' && <GowaStatusDot />}
             </Link>
           );
         })}

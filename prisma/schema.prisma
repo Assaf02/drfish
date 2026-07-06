@@ -168,3 +168,34 @@ model Setting {
 
   @@map("settings")
 }
+
+model Campaign {
+  id               String        @id @default(cuid())
+  name             String
+  message          String
+  status           String        @default("DRAFT")
+  totalSent        Int           @default(0)
+  totalFailed      Int           @default(0)
+  totalTargets     Int           @default(0)
+  baseDelaySeconds Int           @default(12)
+  source           String        @default("DB_CLIENTS")
+  phones           String[]      @default([])
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  logs CampaignLog[]
+
+  @@map("campaigns")
+}
+
+model CampaignLog {
+  id         String   @id @default(cuid())
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  phone      String
+  status     String
+  error      String?
+  sentAt     DateTime @default(now())
+
+  @@map("campaign_logs")
+}
