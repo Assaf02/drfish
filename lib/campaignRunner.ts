@@ -1,6 +1,16 @@
 import { prisma } from './prisma';
 
-const GOWA_URL = process.env.GOWA_URL ?? 'http://localhost:3000';
+const GREEN_API_URL      = process.env.GREEN_API_URL       ?? '';
+const GREEN_API_INSTANCE = process.env.GREEN_API_INSTANCE_ID ?? '';
+const GREEN_API_TOKEN    = process.env.GREEN_API_TOKEN      ?? '';
+
+function greenApiBase() {
+  return `${GREEN_API_URL}/waInstance${GREEN_API_INSTANCE}`;
+}
+
+export function greenApiConfigured(): boolean {
+  return !!(GREEN_API_URL && GREEN_API_INSTANCE && GREEN_API_TOKEN);
+}
 
 // Module-level singleton — persists across requests in the same Node.js process
 const stopFlags = new Map<string, boolean>(); // campaignId → shouldStop
@@ -21,7 +31,7 @@ export function normalizePhone(raw: string): string | null {
 }
 
 function toWaPhone(phone: string): string {
-  return `${phone}@s.whatsapp.net`;
+  return `${phone}@c.us`;
 }
 
 // ── Timing utilities ───────────────────────────────────────────────────────────
@@ -100,12 +110,15 @@ export async function sendCampaign(campaignId: string): Promise<void> {
       }
 
       try {
-        const res = await fetch(`${GOWA_URL}/send/message`, {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ phone: toWaPhone(phone), message: campaign.message }),
-          signal:  AbortSignal.timeout(15_000),
-        });
+        const res = await fetch(
+          `${greenApiBase()}/sendMessage/${GREEN_API_TOKEN}`,
+          {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ chatId: toWaPhone(phone), message: campaign.message }),
+            signal:  AbortSignal.timeout(15_000),
+          },
+        );
 
         if (res.ok) {
           sent++;

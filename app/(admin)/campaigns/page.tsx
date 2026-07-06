@@ -101,7 +101,7 @@ export default function CampaignsPage() {
     try {
       const res  = await fetch('/api/whatsapp/qr', { cache: 'no-store' });
       const data = await res.json();
-      const img  = data?.results?.qr_image ?? data?.qr_image ?? null;
+      const img  = data?.qrImage ?? null;
       setGowa((g) => ({ ...g, qrImage: img ?? undefined }));
     } catch {/* ignore */}
   }
@@ -255,7 +255,7 @@ function GowaStatusBanner({
         style={{ background: 'rgba(26,122,74,0.06)', border: '1px solid rgba(26,122,74,0.15)' }}>
         <Wifi size={16} style={{ color: '#16a34a' }} />
         <p className="text-sm font-semibold" style={{ color: '#15803d' }}>
-          WhatsApp connecté — GoWA prêt à envoyer
+          WhatsApp connecté — Green API prête à envoyer
         </p>
         <button onClick={onRefresh} className="ml-auto text-xs"
           style={{ color: 'rgba(21,128,61,0.6)' }}>
@@ -272,11 +272,11 @@ function GowaStatusBanner({
         <WifiOff size={16} style={{ color: '#dc2626', flexShrink: 0, marginTop: 2 }} />
         <div className="flex-1">
           <p className="text-sm font-semibold" style={{ color: '#b91c1c' }}>
-            {gowa.unreachable ? 'GoWA injoignable' : 'WhatsApp déconnecté'}
+            {gowa.unreachable ? 'Green API injoignable' : 'WhatsApp déconnecté'}
           </p>
           <p className="text-xs mt-0.5" style={{ color: 'var(--gray-400)' }}>
             {gowa.unreachable
-              ? 'Vérifiez que GoWA tourne sur le serveur configuré (GOWA_URL).'
+              ? 'Vérifiez les variables GREEN_API_URL, GREEN_API_INSTANCE_ID, GREEN_API_TOKEN sur Vercel.'
               : 'Scannez le QR code ci-dessous pour connecter WhatsApp.'}
           </p>
         </div>
