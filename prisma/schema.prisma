@@ -173,13 +173,19 @@ model Campaign {
   id               String        @id @default(cuid())
   name             String
   message          String
-  status           String        @default("DRAFT")
+  status           String        @default("DRAFT")  // DRAFT|SCHEDULED|RUNNING|DONE|STOPPED
   totalSent        Int           @default(0)
   totalFailed      Int           @default(0)
   totalTargets     Int           @default(0)
+  totalSkipped     Int           @default(0)
   baseDelaySeconds Int           @default(12)
   source           String        @default("DB_CLIENTS")
   phones           String[]      @default([])
+  mediaUrl         String?
+  scheduledAt      DateTime?
+  dailyLimit       Int           @default(200)
+  validateNumbers  Boolean       @default(true)
+  stopReason       String?
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 

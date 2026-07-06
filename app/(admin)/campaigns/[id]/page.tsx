@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import {
   ArrowLeft, Square, Play, RotateCcw, Loader2,
-  CheckCircle2, XCircle, Clock, TrendingUp,
+  CheckCircle2, XCircle, Clock, TrendingUp, SkipForward, Paperclip, CalendarClock, AlertTriangle,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
-type CampaignStatus = 'DRAFT' | 'RUNNING' | 'DONE' | 'STOPPED';
+type CampaignStatus = 'DRAFT' | 'SCHEDULED' | 'RUNNING' | 'DONE' | 'STOPPED';
 
 type Log = {
   id:     string;
@@ -31,8 +31,13 @@ type Campaign = {
   totalSent:        number;
   totalFailed:      number;
   totalTargets:     number;
+  totalSkipped:     number;
   baseDelaySeconds: number;
+  dailyLimit:       number;
   source:           string;
+  mediaUrl:         string | null;
+  scheduledAt:      string | null;
+  stopReason:       string | null;
   createdAt:        string;
   logs:             Log[];
 };
@@ -41,10 +46,11 @@ type Campaign = {
 
 function statusBadge(status: CampaignStatus) {
   const map: Record<CampaignStatus, { v: 'green' | 'blue' | 'orange' | 'gray'; label: string }> = {
-    DONE:    { v: 'green',  label: 'Terminée' },
-    RUNNING: { v: 'blue',   label: 'En cours…' },
-    STOPPED: { v: 'orange', label: 'Arrêtée' },
-    DRAFT:   { v: 'gray',   label: 'Brouillon' },
+    DONE:      { v: 'green',  label: 'Terminée' },
+    RUNNING:   { v: 'blue',   label: 'En cours…' },
+    STOPPED:   { v: 'orange', label: 'Arrêtée' },
+    DRAFT:     { v: 'gray',   label: 'Brouillon' },
+    SCHEDULED: { v: 'blue',   label: 'Programmée' },
   };
   const s = map[status] ?? map.DRAFT;
   return <Badge variant={s.v} dot>{s.label}</Badge>;
@@ -181,9 +187,9 @@ export default function CampaignDetailPage() {
     );
   }
 
-  const done      = campaign.totalSent + campaign.totalFailed;
-  const remaining = Math.max(0, campaign.totalTargets - done);
-  const pct       = campaign.totalTargets > 0 ? Math.round((done / campaign.totalTargets) * 100) : 0;
+  const done        = campaign.totalSent + campaign.totalFailed;
+  const pct         = campaign.totalTargets > 0 ? Math.round((done / campaign.totalTargets) * 100) : 0;
+  const remaining   = Math.max(0, campaign.totalTargets - done);
   const successRate = done > 0 ? ((campaign.totalSent / done) * 100).toFixed(1) : '—';
 
   return (
@@ -205,10 +211,16 @@ export default function CampaignDetailPage() {
           </div>
           <p className="text-xs mt-0.5" style={{ color: 'var(--gray-400)' }}>
             Créée le {format(new Date(campaign.createdAt), 'dd MMMM yyyy à HH:mm', { locale: fr })}
-            {' · '}
-            Délai : {campaign.baseDelaySeconds}s
-            {' · '}
-            Source : {campaign.source === 'DB_CLIENTS' ? 'Clients DB' : 'Importée'}
+            {' · '}Délai : {campaign.baseDelaySeconds}s
+            {' · '}Limite : {campaign.dailyLimit}/j
+            {' · '}Source : {campaign.source === 'DB_CLIENTS' ? 'Clients DB' : 'Importée'}
+            {campaign.scheduledAt && (
+              <span style={{ color: 'var(--blue)' }}>
+                {' · '}
+                <CalendarClock size={11} className="inline mr-0.5" />
+                Programmée le {format(new Date(campaign.scheduledAt), 'dd MMM yyyy à HH:mm', { locale: fr })}
+              </span>
+            )}
           </p>
         </div>
 
@@ -225,7 +237,7 @@ export default function CampaignDetailPage() {
               Arrêter
             </button>
           )}
-          {(campaign.status === 'DRAFT' || campaign.status === 'STOPPED') && (
+          {(campaign.status === 'DRAFT' || campaign.status === 'STOPPED' || campaign.status === 'SCHEDULED') && (
             <button
               onClick={start}
               disabled={starting}
@@ -281,6 +293,22 @@ export default function CampaignDetailPage() {
         </div>
       )}
 
+      {/* ── Daily limit banner ─────────────────────────────────────────────── */}
+      {campaign.stopReason === 'DAILY_LIMIT' && (
+        <div className="flex items-center gap-3 px-5 py-3.5 rounded-2xl"
+          style={{ background: 'rgba(192,92,0,0.06)', border: '1px solid rgba(192,92,0,0.2)' }}>
+          <AlertTriangle size={16} style={{ color: 'var(--orange)', flexShrink: 0 }} />
+          <div className="flex-1">
+            <p className="text-sm font-semibold" style={{ color: 'var(--orange)' }}>
+              Limite journalière atteinte ({campaign.dailyLimit} messages)
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--gray-400)' }}>
+              Redémarrez la campagne demain pour continuer les envois
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* ── KPI cards ──────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
@@ -299,11 +327,11 @@ export default function CampaignDetailPage() {
             bg:     campaign.totalFailed > 0 ? 'rgba(192,92,0,0.08)' : 'var(--gray-50)',
           },
           {
-            icon: <Clock size={15} />,
-            label: 'Restants',
-            value: remaining,
-            accent: 'var(--blue)',
-            bg:     'rgba(46,109,180,0.08)',
+            icon: <SkipForward size={15} />,
+            label: 'Ignorés',
+            value: campaign.totalSkipped,
+            accent: campaign.totalSkipped > 0 ? 'var(--gray-400)' : 'var(--gray-400)',
+            bg:     'var(--gray-50)',
           },
           {
             icon: <TrendingUp size={15} />,
@@ -330,18 +358,33 @@ export default function CampaignDetailPage() {
         ))}
       </div>
 
-      {/* ── Message preview ────────────────────────────────────────────────── */}
+      {/* ── Message / Media preview ────────────────────────────────────────── */}
       <div className="card p-5">
         <p className="label mb-3">Message envoyé</p>
+        {campaign.mediaUrl && (
+          <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-xl"
+            style={{ background: 'rgba(46,109,180,0.06)', border: '1px solid rgba(46,109,180,0.12)' }}>
+            <Paperclip size={13} style={{ color: 'var(--blue)', flexShrink: 0 }} />
+            <a
+              href={campaign.mediaUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-medium truncate hover:underline"
+              style={{ color: 'var(--blue)' }}
+            >
+              {campaign.mediaUrl.split('/').pop()?.split('?')[0] ?? 'fichier joint'}
+            </a>
+          </div>
+        )}
         <div className="rounded-2xl p-4 text-sm whitespace-pre-wrap max-w-sm"
           style={{
-            background:   'rgba(37,211,102,0.08)',
-            border:       '1px solid rgba(37,211,102,0.15)',
-            color:        'var(--navy)',
-            fontFamily:   'inherit',
-            lineHeight:   1.6,
+            background:  'rgba(37,211,102,0.08)',
+            border:      '1px solid rgba(37,211,102,0.15)',
+            color:       'var(--navy)',
+            fontFamily:  'inherit',
+            lineHeight:  1.6,
           }}>
-          {campaign.message}
+          {campaign.message || <span style={{ color: 'var(--gray-400)', fontStyle: 'italic' }}>(sans texte)</span>}
         </div>
       </div>
 

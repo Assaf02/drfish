@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
   MessageCircle, Plus, Play, Eye, Wifi, WifiOff,
   RefreshCw, Upload, X, CheckCircle2, AlertCircle,
-  Loader2, Users, FileText,
+  Loader2, Users, FileText, Paperclip, Calendar, Shield, ChevronDown,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -15,7 +15,7 @@ import { normalizePhone } from '@/lib/campaignRunner';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
-type CampaignStatus = 'DRAFT' | 'RUNNING' | 'DONE' | 'STOPPED';
+type CampaignStatus = 'DRAFT' | 'SCHEDULED' | 'RUNNING' | 'DONE' | 'STOPPED';
 
 type Campaign = {
   id:               string;
@@ -40,10 +40,11 @@ type GowaState = {
 
 function statusBadge(status: CampaignStatus) {
   const map: Record<CampaignStatus, { v: 'green' | 'blue' | 'orange' | 'gray'; label: string }> = {
-    DONE:    { v: 'green',  label: 'Terminée' },
-    RUNNING: { v: 'blue',   label: 'En cours' },
-    STOPPED: { v: 'orange', label: 'Arrêtée' },
-    DRAFT:   { v: 'gray',   label: 'Brouillon' },
+    DONE:      { v: 'green',  label: 'Terminée' },
+    RUNNING:   { v: 'blue',   label: 'En cours' },
+    STOPPED:   { v: 'orange', label: 'Arrêtée' },
+    DRAFT:     { v: 'gray',   label: 'Brouillon' },
+    SCHEDULED: { v: 'blue',   label: 'Programmée' },
   };
   const s = map[status] ?? map.DRAFT;
   return <Badge variant={s.v} dot>{s.label}</Badge>;
@@ -313,14 +314,19 @@ function NewCampaignModal({
   onClose:   () => void;
   onCreated: (id: string) => void;
 }) {
-  const [name,    setName]    = useState('');
-  const [message, setMessage] = useState('');
-  const [source,  setSource]  = useState<'DB_CLIENTS' | 'IMPORTED'>('DB_CLIENTS');
-  const [delay,   setDelay]   = useState(12);
-  const [phones,  setPhones]  = useState<string[]>([]);
-  const [dbCount, setDbCount] = useState<number | null>(null);
-  const [saving,  setSaving]  = useState(false);
-  const [dragOver, setDragOver] = useState(false);
+  const [name,            setName]            = useState('');
+  const [message,         setMessage]         = useState('');
+  const [source,          setSource]          = useState<'DB_CLIENTS' | 'IMPORTED'>('DB_CLIENTS');
+  const [delay,           setDelay]           = useState(12);
+  const [phones,          setPhones]          = useState<string[]>([]);
+  const [dbCount,         setDbCount]         = useState<number | null>(null);
+  const [saving,          setSaving]          = useState(false);
+  const [dragOver,        setDragOver]        = useState(false);
+  const [mediaUrl,        setMediaUrl]        = useState('');
+  const [scheduledAt,     setScheduledAt]     = useState('');
+  const [dailyLimit,      setDailyLimit]      = useState(200);
+  const [validateNumbers, setValidateNumbers] = useState(true);
+  const [showAdvanced,    setShowAdvanced]    = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Fetch DB client count on mount
@@ -375,7 +381,14 @@ function NewCampaignModal({
       const res  = await fetch('/api/campaigns', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ name, message, source, phones, baseDelaySeconds: delay }),
+        body:    JSON.stringify({
+          name, message, source, phones,
+          baseDelaySeconds: delay,
+          mediaUrl:         mediaUrl || null,
+          scheduledAt:      scheduledAt ? new Date(scheduledAt).toISOString() : null,
+          dailyLimit,
+          validateNumbers,
+        }),
       });
       if (!res.ok) throw new Error((await res.json()).error ?? 'Erreur');
       const data = await res.json();
@@ -545,6 +558,50 @@ function NewCampaignModal({
             </p>
           </div>
 
+          {/* Media */}
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5"
+              style={{ color: 'var(--gray-400)' }}>
+              <Paperclip size={11} className="inline mr-1" />
+              Fichier joint (optionnel)
+            </label>
+            <input
+              type="url"
+              value={mediaUrl}
+              onChange={(e) => setMediaUrl(e.target.value)}
+              placeholder="https://example.com/promo.pdf ou image.jpg"
+              className="w-full text-sm px-4 py-2.5 rounded-xl border outline-none"
+              style={{ borderColor: 'var(--gray-100)', color: 'var(--navy)' }}
+            />
+            {mediaUrl && (
+              <p className="text-[11px] mt-1" style={{ color: 'var(--teal)' }}>
+                Le message deviendra la légende du fichier
+              </p>
+            )}
+          </div>
+
+          {/* Scheduling */}
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5"
+              style={{ color: 'var(--gray-400)' }}>
+              <Calendar size={11} className="inline mr-1" />
+              Programmer l&apos;envoi (optionnel)
+            </label>
+            <input
+              type="datetime-local"
+              value={scheduledAt}
+              onChange={(e) => setScheduledAt(e.target.value)}
+              min={new Date(Date.now() + 60_000).toISOString().slice(0, 16)}
+              className="w-full text-sm px-4 py-2.5 rounded-xl border outline-none"
+              style={{ borderColor: 'var(--gray-100)', color: scheduledAt ? 'var(--navy)' : 'var(--gray-400)' }}
+            />
+            {scheduledAt && (
+              <p className="text-[11px] mt-1" style={{ color: 'var(--blue)' }}>
+                La campagne démarrera automatiquement à cette date
+              </p>
+            )}
+          </div>
+
           {/* Delay */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5"
@@ -568,6 +625,69 @@ function NewCampaignModal({
             <p className="text-[11px] mt-0.5" style={{ color: 'var(--gray-400)' }}>
               Délai réel : {(delay * 0.7).toFixed(0)}–{(delay * 1.8).toFixed(0)}s (humanisé)
             </p>
+          </div>
+
+          {/* Anti-ban settings */}
+          <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--gray-100)' }}>
+            <button
+              type="button"
+              onClick={() => setShowAdvanced((v) => !v)}
+              className="w-full flex items-center gap-2 px-4 py-3 text-left"
+              style={{ background: 'var(--off-white)' }}
+            >
+              <Shield size={13} style={{ color: 'var(--blue)' }} />
+              <span className="text-xs font-semibold flex-1" style={{ color: 'var(--navy)' }}>
+                Paramètres anti-ban
+              </span>
+              <ChevronDown size={13} style={{ color: 'var(--gray-400)', transform: showAdvanced ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+            </button>
+
+            {showAdvanced && (
+              <div className="px-4 py-4 space-y-4" style={{ borderTop: '1px solid var(--gray-100)' }}>
+                {/* Validate numbers */}
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={validateNumbers}
+                    onChange={(e) => setValidateNumbers(e.target.checked)}
+                    style={{ accentColor: 'var(--navy)', width: 15, height: 15 }}
+                  />
+                  <div>
+                    <p className="text-xs font-semibold" style={{ color: 'var(--navy)' }}>
+                      Valider les numéros avant envoi
+                    </p>
+                    <p className="text-[11px]" style={{ color: 'var(--gray-400)' }}>
+                      Vérifie chaque numéro sur WhatsApp — évite les envois vers des comptes inexistants
+                    </p>
+                  </div>
+                </label>
+
+                {/* Daily limit */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <p className="text-xs font-semibold" style={{ color: 'var(--navy)' }}>
+                      Limite journalière
+                    </p>
+                    <span className="font-bold text-xs" style={{ color: 'var(--navy)' }}>
+                      {dailyLimit} msg/jour
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={10}
+                    max={500}
+                    step={10}
+                    value={dailyLimit}
+                    onChange={(e) => setDailyLimit(Number(e.target.value))}
+                    className="w-full"
+                    style={{ accentColor: 'var(--navy)' }}
+                  />
+                  <p className="text-[11px] mt-0.5" style={{ color: 'var(--gray-400)' }}>
+                    Recommandé : ≤200 pour les comptes récents — la campagne s&apos;arrête automatiquement si la limite est atteinte
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Recipient preview */}
@@ -602,7 +722,7 @@ function NewCampaignModal({
               {saving
                 ? <Loader2 size={15} className="animate-spin inline mr-1" />
                 : null}
-              {saving ? 'Création…' : 'Créer et démarrer →'}
+              {saving ? 'Création…' : scheduledAt ? 'Programmer →' : 'Créer →'}
             </button>
           </div>
         </form>

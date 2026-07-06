@@ -10,6 +10,10 @@ const createSchema = z.object({
   baseDelaySeconds: z.number().min(8).default(12),
   source:           z.enum(['DB_CLIENTS', 'IMPORTED']),
   phones:           z.array(z.string()).default([]),
+  mediaUrl:         z.string().url().optional().nullable(),
+  scheduledAt:      z.string().datetime().optional().nullable(),
+  dailyLimit:       z.number().min(10).max(1000).default(200),
+  validateNumbers:  z.boolean().default(true),
 });
 
 export async function GET(req: NextRequest) {
@@ -47,6 +51,9 @@ export async function POST(req: NextRequest) {
   if (!parsed.success)
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
+  const scheduledAt = parsed.data.scheduledAt ? new Date(parsed.data.scheduledAt) : null;
+  const isScheduled = scheduledAt && scheduledAt > new Date();
+
   const campaign = await prisma.campaign.create({
     data: {
       name:             parsed.data.name,
@@ -54,7 +61,11 @@ export async function POST(req: NextRequest) {
       baseDelaySeconds: parsed.data.baseDelaySeconds,
       source:           parsed.data.source,
       phones:           parsed.data.phones,
-      status:           'DRAFT',
+      mediaUrl:         parsed.data.mediaUrl ?? null,
+      scheduledAt:      scheduledAt,
+      dailyLimit:       parsed.data.dailyLimit,
+      validateNumbers:  parsed.data.validateNumbers,
+      status:           isScheduled ? 'SCHEDULED' : 'DRAFT',
     },
   });
 
