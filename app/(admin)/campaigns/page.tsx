@@ -323,11 +323,16 @@ function NewCampaignModal({
   const [saving,          setSaving]          = useState(false);
   const [dragOver,        setDragOver]        = useState(false);
   const [mediaUrl,        setMediaUrl]        = useState('');
+  const [mediaFileName,   setMediaFileName]   = useState('');
+  const [mediaType,       setMediaType]       = useState('');
+  const [uploading,       setUploading]       = useState(false);
+  const [mediaDragOver,   setMediaDragOver]   = useState(false);
   const [scheduledAt,     setScheduledAt]     = useState('');
   const [dailyLimit,      setDailyLimit]      = useState(200);
   const [validateNumbers, setValidateNumbers] = useState(true);
   const [showAdvanced,    setShowAdvanced]    = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const fileRef      = useRef<HTMLInputElement>(null);
+  const mediaFileRef = useRef<HTMLInputElement>(null);
 
   // Fetch DB client count on mount
   useEffect(() => {
@@ -366,6 +371,29 @@ function NewCampaignModal({
     setDragOver(false);
     const file = e.dataTransfer.files[0];
     if (file) handleFile(file);
+  }
+
+  async function handleMediaUpload(file: File) {
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/upload', { method: 'POST', body: fd });
+      if (!res.ok) {
+        const err = await res.json();
+        toast.error(err.error ?? 'Erreur upload');
+        return;
+      }
+      const data = await res.json();
+      setMediaUrl(data.url);
+      setMediaFileName(data.fileName);
+      setMediaType(data.type);
+      toast.success('Fichier joint !');
+    } catch {
+      toast.error('Erreur lors de l\'upload');
+    } finally {
+      setUploading(false);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -560,23 +588,83 @@ function NewCampaignModal({
 
           {/* Media */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5"
+            <label className="block text-xs font-semibold uppercase tracking-wide mb-2"
               style={{ color: 'var(--gray-400)' }}>
               <Paperclip size={11} className="inline mr-1" />
               Fichier joint (optionnel)
             </label>
+
+            {/* Hidden file input */}
             <input
-              type="url"
-              value={mediaUrl}
-              onChange={(e) => setMediaUrl(e.target.value)}
-              placeholder="https://example.com/promo.pdf ou image.jpg"
-              className="w-full text-sm px-4 py-2.5 rounded-xl border outline-none"
-              style={{ borderColor: 'var(--gray-100)', color: 'var(--navy)' }}
+              ref={mediaFileRef}
+              type="file"
+              accept="image/*,video/mp4,video/quicktime,video/webm,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+              className="hidden"
+              onChange={(e) => { if (e.target.files?.[0]) handleMediaUpload(e.target.files[0]); }}
             />
-            {mediaUrl && (
-              <p className="text-[11px] mt-1" style={{ color: 'var(--teal)' }}>
-                Le message deviendra la légende du fichier
-              </p>
+
+            {mediaUrl ? (
+              /* ── Media preview ── */
+              <div className="flex items-center gap-3 p-3 rounded-xl"
+                style={{ border: '1px solid var(--gray-100)', background: 'var(--off-white)' }}>
+                {mediaType.startsWith('image/') ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={mediaUrl} alt="" className="w-14 h-14 rounded-lg object-cover flex-shrink-0"
+                    style={{ border: '1px solid var(--gray-100)' }} />
+                ) : (
+                  <div className="w-14 h-14 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style={{ background: 'rgba(46,109,180,0.08)', color: 'var(--blue)', fontSize: 24 }}>
+                    {mediaType.startsWith('video/')  ? '🎬' :
+                     mediaType === 'application/pdf' ? '📄' : '📎'}
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold truncate" style={{ color: 'var(--navy)' }}>
+                    {mediaFileName || mediaUrl.split('/').pop()?.split('?')[0]}
+                  </p>
+                  <p className="text-[11px] mt-0.5" style={{ color: 'var(--gray-400)' }}>
+                    Le message sera envoyé en légende
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setMediaUrl(''); setMediaFileName(''); setMediaType(''); }}
+                  className="p-1.5 rounded-lg transition-colors hover:bg-gray-100 flex-shrink-0"
+                >
+                  <X size={14} style={{ color: 'var(--gray-400)' }} />
+                </button>
+              </div>
+            ) : (
+              /* ── Upload zone ── */
+              <div
+                onDragOver={(e) => { e.preventDefault(); setMediaDragOver(true); }}
+                onDragLeave={() => setMediaDragOver(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setMediaDragOver(false);
+                  const f = e.dataTransfer.files[0];
+                  if (f) handleMediaUpload(f);
+                }}
+                onClick={() => !uploading && mediaFileRef.current?.click()}
+                className="border-2 border-dashed rounded-xl p-4 text-center transition-colors"
+                style={{
+                  borderColor: mediaDragOver ? 'var(--blue)' : 'var(--gray-100)',
+                  background:  mediaDragOver ? 'rgba(46,109,180,0.04)' : 'var(--off-white)',
+                  cursor:      uploading ? 'default' : 'pointer',
+                }}
+              >
+                {uploading ? (
+                  <Loader2 size={20} className="animate-spin mx-auto mb-1.5" style={{ color: 'var(--blue)' }} />
+                ) : (
+                  <Upload size={20} className="mx-auto mb-1.5" style={{ color: 'var(--gray-400)' }} />
+                )}
+                <p className="text-xs font-semibold" style={{ color: 'var(--navy)' }}>
+                  {uploading ? 'Upload en cours…' : 'Glisser ou cliquer pour joindre'}
+                </p>
+                <p className="text-[11px] mt-0.5" style={{ color: 'var(--gray-400)' }}>
+                  Image · Vidéo · PDF · Word · Excel (max 20 Mo)
+                </p>
+              </div>
             )}
           </div>
 
