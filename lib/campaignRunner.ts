@@ -13,7 +13,7 @@ export function greenApiConfigured(): boolean {
   return !!(GREEN_API_URL && GREEN_API_INSTANCE && GREEN_API_TOKEN);
 }
 
-// Module-level singleton — persists across requests in the same Node.js process
+// In-memory fast-path stop (works when start + stop hit the same process)
 const stopFlags = new Map<string, boolean>();
 
 // ── Phone utilities ────────────────────────────────────────────────────────────
@@ -35,12 +35,12 @@ function toWaPhone(phone: string): string {
 // ── Timing ─────────────────────────────────────────────────────────────────────
 
 function humanDelay(baseSeconds: number): number {
-  const factor = 0.7 + Math.random() * 1.1; // 0.7–1.8×
+  const factor = 0.7 + Math.random() * 1.1;
   return Math.round(baseSeconds * factor * 1_000);
 }
 
 function longPause(): number {
-  return Math.round((25 + Math.random() * 30) * 1_000); // 25–55 s
+  return Math.round((25 + Math.random() * 30) * 1_000);
 }
 
 function sleep(ms: number) {
@@ -48,8 +48,6 @@ function sleep(ms: number) {
 }
 
 // ── Anti-ban: WhatsApp registration check ─────────────────────────────────────
-// Verifies that the number actually has a WhatsApp account before sending.
-// Avoids sending to dead numbers (which triggers spam flags).
 
 async function checkIsOnWhatsApp(phone: string): Promise<boolean> {
   try {
@@ -59,16 +57,16 @@ async function checkIsOnWhatsApp(phone: string): Promise<boolean> {
       body:    JSON.stringify({ phoneNumber: phone }),
       signal:  AbortSignal.timeout(8_000),
     });
-    if (!res.ok) return true; // assume valid if check fails
+    if (!res.ok) return true;
     const data = await res.json();
     return data?.existsWhatsapp === true;
   } catch {
-    return true; // assume valid on network error
+    return true;
   }
 }
 
 async function validatePhonesBatch(phones: string[], campaignId: string): Promise<{ valid: string[]; skipped: number }> {
-  const BATCH = 3; // 3 concurrent checks — conservative to avoid rate limiting
+  const BATCH = 3;
   const valid: string[] = [];
   let skipped = 0;
 
@@ -80,7 +78,6 @@ async function validatePhonesBatch(phones: string[], campaignId: string): Promis
       if (r.ok) valid.push(r.phone);
       else skipped++;
     }
-    // Persist running skip count so the UI can show progress
     await prisma.campaign.update({ where: { id: campaignId }, data: { totalSkipped: skipped } });
     if (i + BATCH < phones.length) await sleep(600);
   }
@@ -90,8 +87,6 @@ async function validatePhonesBatch(phones: string[], campaignId: string): Promis
 
 // ── Message sending ────────────────────────────────────────────────────────────
 
-// Tiny per-message variation to avoid identical-message spam detection.
-// Uses zero-width non-joiners which are invisible and survive copy-paste.
 const VARIATIONS = ['​', '‌', '‍'];
 function addVariation(text: string): string {
   return text + VARIATIONS[Math.floor(Math.random() * VARIATIONS.length)];
@@ -120,13 +115,8 @@ async function sendWA(
       res = await fetch(`${greenApiBase()}/sendFileByUrl/${GREEN_API_TOKEN}`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({
-          chatId,
-          urlFile:  mediaUrl,
-          fileName,
-          caption:  message || undefined,
-        }),
-        signal: AbortSignal.timeout(45_000),
+        body:    JSON.stringify({ chatId, urlFile: mediaUrl, fileName, caption: message || undefined }),
+        signal:  AbortSignal.timeout(45_000),
       });
     } else {
       res = await fetch(`${greenApiBase()}/sendMessage/${GREEN_API_TOKEN}`, {
@@ -138,19 +128,16 @@ async function sendWA(
     }
 
     if (res.ok) return { ok: true };
-    const raw = await res.text().catch(() => '');
+    const raw    = await res.text().catch(() => '');
     const errMsg = parseGreenApiError(raw, res.status);
-
-    // If instance disconnected mid-campaign, stop immediately
     if (errMsg.includes('notAuthorized') || errMsg.includes('unauthorized')) {
       return { ok: false, error: 'WhatsApp déconnecté — rescannez le QR dans Campagnes' };
     }
-
     return { ok: false, error: errMsg };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     if (msg.includes('abort') || msg.includes('timeout')) {
-      return { ok: false, error: 'Timeout — Green API n\'a pas répondu à temps' };
+      return { ok: false, error: "Timeout — Green API n'a pas répondu à temps" };
     }
     return { ok: false, error: msg.slice(0, 200) };
   }
@@ -173,16 +160,33 @@ export async function sendCampaign(campaignId: string): Promise<void> {
     const campaign = await prisma.campaign.findUnique({ where: { id: campaignId } });
     if (!campaign) throw new Error('Campaign not found');
 
+    // ── Resume detection ──────────────────────────────────────────────────────
+    // Load existing logs so we can skip already-sent numbers on resume
+    const existingLogs = await prisma.campaignLog.findMany({
+      where:  { campaignId },
+      select: { phone: true, status: true },
+    });
+    const isResume    = existingLogs.length > 0;
+    const alreadySent = new Set(existingLogs.filter(l => l.status === 'SENT').map(l => l.phone));
+    let sent          = existingLogs.filter(l => l.status === 'SENT').length;
+    let failed        = existingLogs.filter(l => l.status === 'FAILED').length;
+
     await prisma.campaign.update({
       where: { id: campaignId },
-      data: { status: 'RUNNING', totalSent: 0, totalFailed: 0, totalSkipped: 0, stopReason: null },
+      data: {
+        status:      'RUNNING',
+        stopReason:  null,
+        totalSent:   sent,
+        totalFailed: failed,
+        ...(isResume ? {} : { totalSkipped: 0 }),
+      },
     });
 
     // ── Resolve raw phone list ────────────────────────────────────────────────
     let rawPhones: string[] = [];
     if (campaign.source === 'DB_CLIENTS') {
       const clients = await prisma.client.findMany({
-        where: { phone: { not: null }, sales: { some: {} } },
+        where:  { phone: { not: null }, sales: { some: {} } },
         select: { phone: true },
       });
       rawPhones = clients.map((c) => c.phone!);
@@ -198,55 +202,53 @@ export async function sendCampaign(campaignId: string): Promise<void> {
       if (n && !seen.has(n)) { seen.add(n); phones.push(n); }
     }
 
-    // ── Anti-ban: pre-validate numbers on WhatsApp ────────────────────────────
+    // Validate only on fresh start (already done on previous run)
     let validPhones = phones;
-    if (campaign.validateNumbers) {
+    if (!isResume && campaign.validateNumbers) {
       const { valid } = await validatePhonesBatch(phones, campaignId);
       validPhones = valid;
     }
 
+    // Skip numbers already successfully received
+    const remainingPhones = validPhones.filter(p => !alreadySent.has(p));
+
     await prisma.campaign.update({
       where: { id: campaignId },
-      data: { totalTargets: validPhones.length },
+      data:  { totalTargets: isResume ? campaign.totalTargets : validPhones.length },
     });
 
-    let sent   = 0;
-    let failed = 0;
+    for (const phone of remainingPhones) {
+      // ── Stop: in-memory fast path (same process) ──────────────────────────
+      if (stopFlags.get(campaignId)) return;
 
-    for (const phone of validPhones) {
-      // ── Stop signal ──────────────────────────────────────────────────────
-      if (stopFlags.get(campaignId)) {
+      // ── Stop: DB check — the real cross-process fix on Vercel ────────────
+      const freshRow = await prisma.campaign.findUnique({
+        where:  { id: campaignId },
+        select: { status: true },
+      });
+      if (!freshRow || freshRow.status === 'STOPPED') {
         await prisma.campaign.update({
           where: { id: campaignId },
-          data: { status: 'STOPPED', totalSent: sent, totalFailed: failed, stopReason: 'MANUAL' },
+          data:  { totalSent: sent, totalFailed: failed },
         });
         return;
       }
 
-      // ── Daily limit check (every 10 sends to limit DB queries) ───────────
+      // ── Daily limit (every 10 sends) ──────────────────────────────────────
       if (sent > 0 && sent % 10 === 0) {
         const todaySent = await prisma.campaignLog.count({
-          where: {
-            campaignId,
-            status: 'SENT',
-            sentAt: { gte: startOfDay(new Date()) },
-          },
+          where: { campaignId, status: 'SENT', sentAt: { gte: startOfDay(new Date()) } },
         });
         if (todaySent >= campaign.dailyLimit) {
           await prisma.campaign.update({
             where: { id: campaignId },
-            data: {
-              status:     'STOPPED',
-              totalSent:  sent,
-              totalFailed: failed,
-              stopReason: 'DAILY_LIMIT',
-            },
+            data:  { status: 'STOPPED', totalSent: sent, totalFailed: failed, stopReason: 'DAILY_LIMIT' },
           });
           return;
         }
       }
 
-      // ── Send ─────────────────────────────────────────────────────────────
+      // ── Send ──────────────────────────────────────────────────────────────
       const result = await sendWA(toWaPhone(phone), campaign.message, campaign.mediaUrl ?? null);
 
       if (result.ok) {
@@ -255,12 +257,10 @@ export async function sendCampaign(campaignId: string): Promise<void> {
       } else {
         failed++;
         await prisma.campaignLog.create({ data: { campaignId, phone, status: 'FAILED', error: result.error } });
-
-        // Stop campaign if WhatsApp session dropped
         if (result.error?.includes('déconnecté') || result.error?.includes('notAuthorized')) {
           await prisma.campaign.update({
             where: { id: campaignId },
-            data: { status: 'STOPPED', totalSent: sent, totalFailed: failed, stopReason: 'DISCONNECTED' },
+            data:  { status: 'STOPPED', totalSent: sent, totalFailed: failed, stopReason: 'DISCONNECTED' },
           });
           return;
         }
@@ -268,16 +268,15 @@ export async function sendCampaign(campaignId: string): Promise<void> {
 
       await prisma.campaign.update({
         where: { id: campaignId },
-        data: { totalSent: sent, totalFailed: failed },
+        data:  { totalSent: sent, totalFailed: failed },
       });
 
-      // ── Humanized pacing — ~1/8 chance of a long pause ───────────────────
       await sleep(Math.random() < 1 / 8 ? longPause() : humanDelay(campaign.baseDelaySeconds));
     }
 
     await prisma.campaign.update({
       where: { id: campaignId },
-      data: { status: 'DONE', totalSent: sent, totalFailed: failed },
+      data:  { status: 'DONE', totalSent: sent, totalFailed: failed },
     });
   } catch (err) {
     console.error(`[Campaign ${campaignId}] Fatal:`, err);
