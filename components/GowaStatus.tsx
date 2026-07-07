@@ -44,7 +44,7 @@ export function GowaStatusDot() {
       title={
         status === 'connected'    ? 'WhatsApp connecté' :
         status === 'disconnected' ? 'WhatsApp déconnecté' :
-        'Green API injoignable'
+        'GoWA injoignable'
       }
     />
   );

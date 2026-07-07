@@ -1,17 +1,7 @@
 import { prisma } from './prisma';
 import { startOfDay } from 'date-fns';
 
-const GREEN_API_URL      = process.env.GREEN_API_URL       ?? '';
-const GREEN_API_INSTANCE = process.env.GREEN_API_INSTANCE_ID ?? '';
-const GREEN_API_TOKEN    = process.env.GREEN_API_TOKEN      ?? '';
-
-function greenApiBase() {
-  return `${GREEN_API_URL}/waInstance${GREEN_API_INSTANCE}`;
-}
-
-export function greenApiConfigured(): boolean {
-  return !!(GREEN_API_URL && GREEN_API_INSTANCE && GREEN_API_TOKEN);
-}
+const GOWA_URL = process.env.GOWA_URL ?? '';
 
 // In-memory fast-path stop (works when start + stop hit the same process)
 const stopFlags = new Map<string, boolean>();
@@ -29,7 +19,7 @@ export function normalizePhone(raw: string): string | null {
 }
 
 function toWaPhone(phone: string): string {
-  return `${phone}@c.us`;
+  return `${phone}@s.whatsapp.net`;
 }
 
 // ── Timing ─────────────────────────────────────────────────────────────────────
@@ -47,44 +37,6 @@ function sleep(ms: number) {
   return new Promise<void>((resolve) => setTimeout(resolve, ms));
 }
 
-// ── Anti-ban: WhatsApp registration check ─────────────────────────────────────
-
-async function checkIsOnWhatsApp(phone: string): Promise<boolean> {
-  try {
-    const res = await fetch(`${greenApiBase()}/checkWhatsapp/${GREEN_API_TOKEN}`, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ phoneNumber: phone }),
-      signal:  AbortSignal.timeout(8_000),
-    });
-    if (!res.ok) return true;
-    const data = await res.json();
-    return data?.existsWhatsapp === true;
-  } catch {
-    return true;
-  }
-}
-
-async function validatePhonesBatch(phones: string[], campaignId: string): Promise<{ valid: string[]; skipped: number }> {
-  const BATCH = 3;
-  const valid: string[] = [];
-  let skipped = 0;
-
-  for (let i = 0; i < phones.length; i += BATCH) {
-    if (stopFlags.get(campaignId)) break;
-    const batch = phones.slice(i, i + BATCH);
-    const results = await Promise.all(batch.map(async (p) => ({ phone: p, ok: await checkIsOnWhatsApp(p) })));
-    for (const r of results) {
-      if (r.ok) valid.push(r.phone);
-      else skipped++;
-    }
-    await prisma.campaign.update({ where: { id: campaignId }, data: { totalSkipped: skipped } });
-    if (i + BATCH < phones.length) await sleep(600);
-  }
-
-  return { valid, skipped };
-}
-
 // ── Message sending ────────────────────────────────────────────────────────────
 
 const VARIATIONS = ['​', '‌', '‍'];
@@ -92,18 +44,8 @@ function addVariation(text: string): string {
   return text + VARIATIONS[Math.floor(Math.random() * VARIATIONS.length)];
 }
 
-function parseGreenApiError(raw: string, httpStatus: number): string {
-  try {
-    const j = JSON.parse(raw);
-    if (j?.invokeStatus) return `Green API: ${j.invokeStatus}`;
-    if (j?.message)      return j.message;
-    if (j?.error)        return j.error;
-  } catch { /* not JSON */ }
-  return raw.slice(0, 200) || `HTTP ${httpStatus}`;
-}
-
 async function sendWA(
-  chatId:   string,
+  phone:    string, // e.g. "229xxxxxxxx@s.whatsapp.net"
   message:  string,
   mediaUrl: string | null,
 ): Promise<{ ok: boolean; error?: string }> {
@@ -111,33 +53,56 @@ async function sendWA(
     let res: Response;
 
     if (mediaUrl) {
-      const fileName = mediaUrl.split('/').pop()?.split('?')[0] ?? 'fichier';
-      res = await fetch(`${greenApiBase()}/sendFileByUrl/${GREEN_API_TOKEN}`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ chatId, urlFile: mediaUrl, fileName, caption: message || undefined }),
-        signal:  AbortSignal.timeout(45_000),
+      // Fetch file from storage then forward to GoWA as multipart
+      const mediaRes = await fetch(mediaUrl, { signal: AbortSignal.timeout(30_000) });
+      if (!mediaRes.ok) throw new Error(`Cannot fetch media: HTTP ${mediaRes.status}`);
+
+      const buffer      = await mediaRes.arrayBuffer();
+      const mimeType    = mediaRes.headers.get('content-type') ?? 'application/octet-stream';
+      const fileName    = new URL(mediaUrl).pathname.split('/').pop() ?? 'fichier';
+
+      const form = new FormData();
+      form.append('phone',   phone);
+      form.append('caption', message || '');
+
+      let endpoint = '/send/document';
+      if (mimeType.startsWith('image/')) {
+        endpoint = '/send/image';
+        form.append('image',    new Blob([buffer], { type: mimeType }), fileName);
+      } else if (mimeType.startsWith('video/')) {
+        endpoint = '/send/video';
+        form.append('video',    new Blob([buffer], { type: mimeType }), fileName);
+      } else {
+        form.append('document', new Blob([buffer], { type: mimeType }), fileName);
+      }
+
+      res = await fetch(`${GOWA_URL}${endpoint}`, {
+        method: 'POST',
+        body:   form,
+        signal: AbortSignal.timeout(60_000),
       });
     } else {
-      res = await fetch(`${greenApiBase()}/sendMessage/${GREEN_API_TOKEN}`, {
+      res = await fetch(`${GOWA_URL}/send/message`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ chatId, message: addVariation(message) }),
+        body:    JSON.stringify({ phone, message: addVariation(message) }),
         signal:  AbortSignal.timeout(30_000),
       });
     }
 
     if (res.ok) return { ok: true };
-    const raw    = await res.text().catch(() => '');
-    const errMsg = parseGreenApiError(raw, res.status);
-    if (errMsg.includes('notAuthorized') || errMsg.includes('unauthorized')) {
-      return { ok: false, error: 'WhatsApp déconnecté — rescannez le QR dans Campagnes' };
-    }
+    const raw = await res.text().catch(() => '');
+    let errMsg = raw.slice(0, 200) || `HTTP ${res.status}`;
+    try {
+      const j = JSON.parse(raw);
+      if (j?.message) errMsg = j.message;
+      if (j?.error)   errMsg = j.error;
+    } catch { /* not JSON */ }
     return { ok: false, error: errMsg };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     if (msg.includes('abort') || msg.includes('timeout')) {
-      return { ok: false, error: "Timeout — Green API n'a pas répondu à temps" };
+      return { ok: false, error: "Timeout — GoWA n'a pas répondu à temps" };
     }
     return { ok: false, error: msg.slice(0, 200) };
   }
@@ -161,7 +126,6 @@ export async function sendCampaign(campaignId: string): Promise<void> {
     if (!campaign) throw new Error('Campaign not found');
 
     // ── Resume detection ──────────────────────────────────────────────────────
-    // Load existing logs so we can skip already-sent numbers on resume
     const existingLogs = await prisma.campaignLog.findMany({
       where:  { campaignId },
       select: { phone: true, status: true },
@@ -182,7 +146,7 @@ export async function sendCampaign(campaignId: string): Promise<void> {
       },
     });
 
-    // ── Resolve raw phone list ────────────────────────────────────────────────
+    // ── Resolve phones ────────────────────────────────────────────────────────
     let rawPhones: string[] = [];
     if (campaign.source === 'DB_CLIENTS') {
       const clients = await prisma.client.findMany({
@@ -194,7 +158,6 @@ export async function sendCampaign(campaignId: string): Promise<void> {
       rawPhones = campaign.phones;
     }
 
-    // Normalize + deduplicate
     const seen = new Set<string>();
     const phones: string[] = [];
     for (const raw of rawPhones) {
@@ -202,26 +165,21 @@ export async function sendCampaign(campaignId: string): Promise<void> {
       if (n && !seen.has(n)) { seen.add(n); phones.push(n); }
     }
 
-    // Validate only on fresh start (already done on previous run)
-    let validPhones = phones;
-    if (!isResume && campaign.validateNumbers) {
-      const { valid } = await validatePhonesBatch(phones, campaignId);
-      validPhones = valid;
+    // Skip already-sent on resume; update targets only on fresh start
+    const remainingPhones = phones.filter(p => !alreadySent.has(p));
+
+    if (!isResume) {
+      await prisma.campaign.update({
+        where: { id: campaignId },
+        data:  { totalTargets: phones.length },
+      });
     }
 
-    // Skip numbers already successfully received
-    const remainingPhones = validPhones.filter(p => !alreadySent.has(p));
-
-    await prisma.campaign.update({
-      where: { id: campaignId },
-      data:  { totalTargets: isResume ? campaign.totalTargets : validPhones.length },
-    });
-
     for (const phone of remainingPhones) {
-      // ── Stop: in-memory fast path (same process) ──────────────────────────
+      // ── Stop: in-memory fast path ─────────────────────────────────────────
       if (stopFlags.get(campaignId)) return;
 
-      // ── Stop: DB check — the real cross-process fix on Vercel ────────────
+      // ── Stop: DB check (cross-process — real Vercel fix) ──────────────────
       const freshRow = await prisma.campaign.findUnique({
         where:  { id: campaignId },
         select: { status: true },
@@ -234,7 +192,7 @@ export async function sendCampaign(campaignId: string): Promise<void> {
         return;
       }
 
-      // ── Daily limit (every 10 sends) ──────────────────────────────────────
+      // ── Daily limit (check every 10 sends) ────────────────────────────────
       if (sent > 0 && sent % 10 === 0) {
         const todaySent = await prisma.campaignLog.count({
           where: { campaignId, status: 'SENT', sentAt: { gte: startOfDay(new Date()) } },
@@ -257,13 +215,6 @@ export async function sendCampaign(campaignId: string): Promise<void> {
       } else {
         failed++;
         await prisma.campaignLog.create({ data: { campaignId, phone, status: 'FAILED', error: result.error } });
-        if (result.error?.includes('déconnecté') || result.error?.includes('notAuthorized')) {
-          await prisma.campaign.update({
-            where: { id: campaignId },
-            data:  { status: 'STOPPED', totalSent: sent, totalFailed: failed, stopReason: 'DISCONNECTED' },
-          });
-          return;
-        }
       }
 
       await prisma.campaign.update({
