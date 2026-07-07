@@ -309,6 +309,21 @@ export default function CampaignDetailPage() {
         </div>
       )}
 
+      {campaign.stopReason === 'DISCONNECTED' && (
+        <div className="flex items-center gap-3 px-5 py-3.5 rounded-2xl"
+          style={{ background: 'rgba(220,38,38,0.05)', border: '1px solid rgba(220,38,38,0.2)' }}>
+          <AlertTriangle size={16} style={{ color: '#dc2626', flexShrink: 0 }} />
+          <div className="flex-1">
+            <p className="text-sm font-semibold" style={{ color: '#b91c1c' }}>
+              WhatsApp déconnecté en cours d&apos;envoi
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--gray-400)' }}>
+              Allez dans <strong>Campagnes</strong> → cliquez <strong>Actualiser</strong> → scannez le QR code → puis redémarrez
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* ── KPI cards ──────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[

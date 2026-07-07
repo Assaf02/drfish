@@ -97,6 +97,16 @@ function addVariation(text: string): string {
   return text + VARIATIONS[Math.floor(Math.random() * VARIATIONS.length)];
 }
 
+function parseGreenApiError(raw: string, httpStatus: number): string {
+  try {
+    const j = JSON.parse(raw);
+    if (j?.invokeStatus) return `Green API: ${j.invokeStatus}`;
+    if (j?.message)      return j.message;
+    if (j?.error)        return j.error;
+  } catch { /* not JSON */ }
+  return raw.slice(0, 200) || `HTTP ${httpStatus}`;
+}
+
 async function sendWA(
   chatId:   string,
   message:  string,
@@ -116,22 +126,33 @@ async function sendWA(
           fileName,
           caption:  message || undefined,
         }),
-        signal: AbortSignal.timeout(30_000),
+        signal: AbortSignal.timeout(45_000),
       });
     } else {
       res = await fetch(`${greenApiBase()}/sendMessage/${GREEN_API_TOKEN}`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ chatId, message: addVariation(message) }),
-        signal:  AbortSignal.timeout(15_000),
+        signal:  AbortSignal.timeout(30_000),
       });
     }
 
     if (res.ok) return { ok: true };
-    const err = (await res.text().catch(() => `HTTP ${res.status}`)).slice(0, 500);
-    return { ok: false, error: err };
+    const raw = await res.text().catch(() => '');
+    const errMsg = parseGreenApiError(raw, res.status);
+
+    // If instance disconnected mid-campaign, stop immediately
+    if (errMsg.includes('notAuthorized') || errMsg.includes('unauthorized')) {
+      return { ok: false, error: 'WhatsApp déconnecté — rescannez le QR dans Campagnes' };
+    }
+
+    return { ok: false, error: errMsg };
   } catch (err: unknown) {
-    return { ok: false, error: (err instanceof Error ? err.message : String(err)).slice(0, 500) };
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes('abort') || msg.includes('timeout')) {
+      return { ok: false, error: 'Timeout — Green API n\'a pas répondu à temps' };
+    }
+    return { ok: false, error: msg.slice(0, 200) };
   }
 }
 
@@ -234,6 +255,15 @@ export async function sendCampaign(campaignId: string): Promise<void> {
       } else {
         failed++;
         await prisma.campaignLog.create({ data: { campaignId, phone, status: 'FAILED', error: result.error } });
+
+        // Stop campaign if WhatsApp session dropped
+        if (result.error?.includes('déconnecté') || result.error?.includes('notAuthorized')) {
+          await prisma.campaign.update({
+            where: { id: campaignId },
+            data: { status: 'STOPPED', totalSent: sent, totalFailed: failed, stopReason: 'DISCONNECTED' },
+          });
+          return;
+        }
       }
 
       await prisma.campaign.update({
