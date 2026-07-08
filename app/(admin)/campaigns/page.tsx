@@ -94,7 +94,7 @@ export default function CampaignsPage() {
     }
   }
 
-  useEffect(() => { load(); checkGowa(); }, []);
+  useEffect(() => { load(); checkGowa(); fetchQr(); }, []);
 
   // ── Fetch QR ──────────────────────────────────────────────────────────────
 
