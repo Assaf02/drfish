@@ -1,7 +1,8 @@
 import { prisma } from './prisma';
 import { startOfDay } from 'date-fns';
 
-const GOWA_URL = process.env.GOWA_URL ?? '';
+const GOWA_URL       = process.env.GOWA_URL        ?? '';
+const GOWA_DEVICE_ID = process.env.GOWA_DEVICE_ID ?? 'drfish';
 
 // In-memory fast-path stop (works when start + stop hit the same process)
 const stopFlags = new Map<string, boolean>();
@@ -77,14 +78,15 @@ async function sendWA(
       }
 
       res = await fetch(`${GOWA_URL}${endpoint}`, {
-        method: 'POST',
-        body:   form,
-        signal: AbortSignal.timeout(60_000),
+        method:  'POST',
+        headers: { 'X-Device-Id': GOWA_DEVICE_ID },
+        body:    form,
+        signal:  AbortSignal.timeout(60_000),
       });
     } else {
       res = await fetch(`${GOWA_URL}/send/message`, {
         method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Device-Id': GOWA_DEVICE_ID },
         body:    JSON.stringify({ phone, message: addVariation(message) }),
         signal:  AbortSignal.timeout(30_000),
       });
