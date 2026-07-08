@@ -37,18 +37,21 @@ export async function GET() {
     }
 
     if (results.qr_link) {
-      // Fetch the PNG server-side and convert to data URL (avoids mixed-content issues)
       const imgUrl = (results.qr_link as string).replace(/^http:\/\//, 'https://');
-      try {
-        const imgRes = await fetch(imgUrl, { signal: AbortSignal.timeout(10_000) });
-        if (imgRes.ok) {
-          const buf    = await imgRes.arrayBuffer();
-          const b64    = Buffer.from(buf).toString('base64');
-          const mime   = imgRes.headers.get('content-type') ?? 'image/png';
-          return NextResponse.json({ qrImage: `data:${mime};base64,${b64}` });
-        }
-      } catch { /* fall through */ }
-      // Fallback: return the URL directly (HTTPS)
+      // GoWA writes the PNG asynchronously — retry up to 3 times with increasing delays
+      for (const delay of [800, 1500, 2500]) {
+        await new Promise(r => setTimeout(r, delay));
+        try {
+          const imgRes = await fetch(imgUrl, { signal: AbortSignal.timeout(8_000) });
+          if (imgRes.ok) {
+            const buf  = await imgRes.arrayBuffer();
+            const b64  = Buffer.from(buf).toString('base64');
+            const mime = imgRes.headers.get('content-type') ?? 'image/png';
+            return NextResponse.json({ qrImage: `data:${mime};base64,${b64}` });
+          }
+        } catch { /* retry */ }
+      }
+      // Last resort: return HTTPS URL directly
       return NextResponse.json({ qrImage: imgUrl });
     }
 
