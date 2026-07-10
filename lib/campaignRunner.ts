@@ -1,23 +1,14 @@
 import { prisma } from './prisma';
+import { normalizePhone as normPhone } from './phoneUtils';
 import { useDbAuthState } from './whatsapp-auth';
-import makeWASocket, { DisconnectReason, WASocket, proto } from '@whiskeysockets/baileys';
+import makeWASocket, { DisconnectReason, WASocket } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
 import pino from 'pino';
 import { startOfDay } from 'date-fns';
 
 const stopFlags = new Map<string, boolean>();
 
-// ── Phone utilities ────────────────────────────────────────────────────────────
-
-export function normalizePhone(raw: string): string | null {
-  if (!raw) return null;
-  const digits = raw.replace(/\D/g, '');
-  if (digits.length < 8) return null;
-  if (digits.startsWith('229') && digits.length >= 11) return digits;
-  if (digits.length === 8) return `229${digits}`;
-  if (digits.length >= 10) return digits;
-  return null;
-}
+export { normalizePhone } from './phoneUtils';
 
 // ── Timing ─────────────────────────────────────────────────────────────────────
 
@@ -161,7 +152,7 @@ export async function sendCampaign(campaignId: string): Promise<void> {
     const seen = new Set<string>();
     const phones: string[] = [];
     for (const raw of rawPhones) {
-      const n = normalizePhone(raw);
+      const n = normPhone(raw);
       if (n && !seen.has(n)) { seen.add(n); phones.push(n); }
     }
 

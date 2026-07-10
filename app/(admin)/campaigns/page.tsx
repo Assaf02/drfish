@@ -11,7 +11,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
-import { normalizePhone } from '@/lib/campaignRunner';
+import { normalizePhone } from '@/lib/phoneUtils';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
