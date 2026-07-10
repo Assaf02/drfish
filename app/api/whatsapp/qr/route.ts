@@ -1,82 +1,81 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import makeWASocket, { DisconnectReason } from '@whiskeysockets/baileys';
+import QRCode from 'qrcode';
+import pino from 'pino';
+import { useDbAuthState, clearWhatsAppSession } from '@/lib/whatsapp-auth';
+import { Boom } from '@hapi/boom';
 
-const GOWA_URL       = process.env.GOWA_URL        ?? '';
-const GOWA_DEVICE_ID = process.env.GOWA_DEVICE_ID ?? 'drfish';
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (session?.user?.role !== 'ADMIN')
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  if (!GOWA_URL)
-    return NextResponse.json({ error: 'GOWA_URL non configurée' }, { status: 503 });
+  const encoder = new TextEncoder();
+  const stream  = new TransformStream<Uint8Array, Uint8Array>();
+  const writer  = stream.writable.getWriter();
 
-  try {
-    // Ensure device exists — create if missing
-    await ensureDevice();
+  const send = (data: object) => {
+    try { writer.write(encoder.encode(`data: ${JSON.stringify(data)}\n\n`)); } catch { /* closed */ }
+  };
 
-    const res = await fetch(`${GOWA_URL}/app/login?device_id=${GOWA_DEVICE_ID}`, {
-      signal: AbortSignal.timeout(10_000),
-      cache:  'no-store',
-    });
+  // Cleanup after 3 minutes (QR expires well before then)
+  const killTimer = setTimeout(() => { writer.close().catch(() => {}); }, 180_000);
 
-    if (!res.ok)
-      return NextResponse.json({ error: 'GoWA indisponible' }, { status: 502 });
+  (async () => {
+    try {
+      const { state, saveCreds } = await useDbAuthState();
 
-    const data    = await res.json();
-    const results = data?.results ?? data ?? {};
-
-    // qr_image = base64 (older versions) | qr_link = URL to PNG (v8+)
-    if (results.qr_image) {
-      const qrImage = results.qr_image.startsWith('data:')
-        ? results.qr_image
-        : `data:image/png;base64,${results.qr_image}`;
-      return NextResponse.json({ qrImage });
-    }
-
-    if (results.qr_link) {
-      const imgUrl = (results.qr_link as string).replace(/^http:\/\//, 'https://');
-      // GoWA writes the PNG asynchronously — retry up to 3 times with increasing delays
-      for (const delay of [800, 1500, 2500]) {
-        await new Promise(r => setTimeout(r, delay));
-        try {
-          const imgRes = await fetch(imgUrl, { signal: AbortSignal.timeout(8_000) });
-          if (imgRes.ok) {
-            const buf  = await imgRes.arrayBuffer();
-            const b64  = Buffer.from(buf).toString('base64');
-            const mime = imgRes.headers.get('content-type') ?? 'image/png';
-            return NextResponse.json({ qrImage: `data:${mime};base64,${b64}` });
-          }
-        } catch { /* retry */ }
-      }
-      // Last resort: return HTTPS URL directly
-      return NextResponse.json({ qrImage: imgUrl });
-    }
-
-    return NextResponse.json({ qrImage: null });
-  } catch {
-    return NextResponse.json({ error: 'GoWA injoignable' }, { status: 502 });
-  }
-}
-
-async function ensureDevice() {
-  try {
-    const listRes = await fetch(`${GOWA_URL}/devices`, { signal: AbortSignal.timeout(5_000), cache: 'no-store' });
-    if (!listRes.ok) return;
-    const data    = await listRes.json();
-    const devices = Array.isArray(data?.results) ? data.results : [];
-    const exists  = devices.some((d: { id?: string; device?: string }) =>
-      (d.id ?? d.device) === GOWA_DEVICE_ID
-    );
-    if (!exists) {
-      await fetch(`${GOWA_URL}/devices`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ device_id: GOWA_DEVICE_ID }),
-        signal:  AbortSignal.timeout(5_000),
+      const sock = makeWASocket({
+        auth: state,
+        printQRInTerminal: false,
+        logger: pino({ level: 'silent' }),
+        browser: ['Dr Fish CRM', 'Chrome', '120.0'],
+        connectTimeoutMs: 60_000,
       });
+
+      sock.ev.on('creds.update', saveCreds);
+
+      sock.ev.on('connection.update', async ({ connection, lastDisconnect, qr }) => {
+        if (qr) {
+          try {
+            const qrDataUrl = await QRCode.toDataURL(qr, { width: 256, margin: 1 });
+            send({ type: 'qr', qrDataUrl });
+          } catch { send({ type: 'error', message: 'Erreur génération QR' }); }
+        }
+
+        if (connection === 'open') {
+          send({ type: 'connected' });
+          clearTimeout(killTimer);
+          writer.close().catch(() => {});
+          sock.ws?.close();
+        }
+
+        if (connection === 'close') {
+          const isLoggedOut =
+            (lastDisconnect?.error as Boom)?.output?.statusCode === DisconnectReason.loggedOut;
+          if (isLoggedOut) await clearWhatsAppSession();
+          send({ type: 'disconnected', loggedOut: isLoggedOut });
+          clearTimeout(killTimer);
+          writer.close().catch(() => {});
+        }
+      });
+    } catch (err) {
+      send({ type: 'error', message: String(err) });
+      writer.close().catch(() => {});
+      clearTimeout(killTimer);
     }
-  } catch { /* ignore */ }
+  })();
+
+  return new Response(stream.readable, {
+    headers: {
+      'Content-Type':  'text/event-stream',
+      'Cache-Control': 'no-cache, no-transform',
+      'Connection':    'keep-alive',
+      'X-Accel-Buffering': 'no',
+    },
+  });
 }

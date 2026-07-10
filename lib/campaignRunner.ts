@@ -1,10 +1,11 @@
 import { prisma } from './prisma';
+import { useDbAuthState } from './whatsapp-auth';
+import makeWASocket, { DisconnectReason, WASocket } from '@whiskeysockets/baileys';
+import { Boom } from '@hapi/boom';
+import pino from 'pino';
 import { startOfDay } from 'date-fns';
 
-const GOWA_URL       = process.env.GOWA_URL        ?? '';
-const GOWA_DEVICE_ID = process.env.GOWA_DEVICE_ID ?? 'drfish';
-
-// In-memory fast-path stop (works when start + stop hit the same process)
+// ── In-memory fast-path stop ───────────────────────────────────────────────────
 const stopFlags = new Map<string, boolean>();
 
 // ── Phone utilities ────────────────────────────────────────────────────────────
@@ -19,15 +20,10 @@ export function normalizePhone(raw: string): string | null {
   return null;
 }
 
-function toWaPhone(phone: string): string {
-  return `${phone}@s.whatsapp.net`;
-}
-
 // ── Timing ─────────────────────────────────────────────────────────────────────
 
 function humanDelay(baseSeconds: number): number {
-  const factor = 0.7 + Math.random() * 1.1;
-  return Math.round(baseSeconds * factor * 1_000);
+  return Math.round((0.7 + Math.random() * 1.1) * baseSeconds * 1_000);
 }
 
 function longPause(): number {
@@ -35,77 +31,92 @@ function longPause(): number {
 }
 
 function sleep(ms: number) {
-  return new Promise<void>((resolve) => setTimeout(resolve, ms));
+  return new Promise<void>((r) => setTimeout(r, ms));
 }
 
-// ── Message sending ────────────────────────────────────────────────────────────
+// ── Anti-ban text variation ────────────────────────────────────────────────────
 
 const VARIATIONS = ['​', '‌', '‍'];
 function addVariation(text: string): string {
   return text + VARIATIONS[Math.floor(Math.random() * VARIATIONS.length)];
 }
 
+// ── Baileys connection ─────────────────────────────────────────────────────────
+
+function openWASocket(onQr?: () => void): Promise<WASocket> {
+  return new Promise(async (resolve, reject) => {
+    const { state, saveCreds } = await useDbAuthState().catch(reject as () => void) ?? { state: null, saveCreds: null };
+    if (!state) return;
+
+    const sock = makeWASocket({
+      auth: state,
+      printQRInTerminal: false,
+      logger: pino({ level: 'silent' }),
+      browser: ['Dr Fish CRM', 'Chrome', '120.0'],
+      connectTimeoutMs: 30_000,
+    });
+
+    sock.ev.on('creds.update', saveCreds!);
+
+    const timeout = setTimeout(() => {
+      sock.ws?.close();
+      reject(new Error('Timeout connexion WhatsApp (30s)'));
+    }, 35_000);
+
+    sock.ev.on('connection.update', ({ connection, lastDisconnect, qr }) => {
+      if (qr) {
+        // QR required means not connected — stop campaign
+        onQr?.();
+        clearTimeout(timeout);
+        sock.ws?.close();
+        reject(new Error('WhatsApp déconnecté — scannez le QR code'));
+        return;
+      }
+      if (connection === 'open') {
+        clearTimeout(timeout);
+        resolve(sock);
+      }
+      if (connection === 'close') {
+        clearTimeout(timeout);
+        const loggedOut = (lastDisconnect?.error as Boom)?.output?.statusCode === DisconnectReason.loggedOut;
+        reject(new Error(loggedOut ? 'Session WhatsApp expirée' : 'Connexion fermée'));
+      }
+    });
+  });
+}
+
+// ── Message sending ────────────────────────────────────────────────────────────
+
 async function sendWA(
-  phone:    string, // e.g. "229xxxxxxxx@s.whatsapp.net"
+  sock:     WASocket,
+  phone:    string,
   message:  string,
   mediaUrl: string | null,
 ): Promise<{ ok: boolean; error?: string }> {
-  try {
-    let res: Response;
+  const jid = `${phone}@s.whatsapp.net`;
 
+  try {
     if (mediaUrl) {
-      // Fetch file from storage then forward to GoWA as multipart
       const mediaRes = await fetch(mediaUrl, { signal: AbortSignal.timeout(30_000) });
       if (!mediaRes.ok) throw new Error(`Cannot fetch media: HTTP ${mediaRes.status}`);
 
-      const buffer      = await mediaRes.arrayBuffer();
-      const mimeType    = mediaRes.headers.get('content-type') ?? 'application/octet-stream';
-      const fileName    = new URL(mediaUrl).pathname.split('/').pop() ?? 'fichier';
+      const buffer   = Buffer.from(await mediaRes.arrayBuffer());
+      const mime     = mediaRes.headers.get('content-type') ?? 'application/octet-stream';
+      const fileName = new URL(mediaUrl).pathname.split('/').pop() ?? 'fichier';
 
-      const form = new FormData();
-      form.append('phone',   phone);
-      form.append('caption', message || '');
-
-      let endpoint = '/send/document';
-      if (mimeType.startsWith('image/')) {
-        endpoint = '/send/image';
-        form.append('image',    new Blob([buffer], { type: mimeType }), fileName);
-      } else if (mimeType.startsWith('video/')) {
-        endpoint = '/send/video';
-        form.append('video',    new Blob([buffer], { type: mimeType }), fileName);
+      if (mime.startsWith('image/')) {
+        await sock.sendMessage(jid, { image: buffer, caption: addVariation(message || ''), mimetype: mime as Parameters<WASocket['sendMessage']>[1] extends { mimetype?: infer M } ? M : string });
+      } else if (mime.startsWith('video/')) {
+        await sock.sendMessage(jid, { video: buffer, caption: addVariation(message || '') });
       } else {
-        form.append('document', new Blob([buffer], { type: mimeType }), fileName);
+        await sock.sendMessage(jid, { document: buffer, caption: addVariation(message || ''), mimetype: mime, fileName });
       }
-
-      res = await fetch(`${GOWA_URL}${endpoint}`, {
-        method:  'POST',
-        headers: { 'X-Device-Id': GOWA_DEVICE_ID },
-        body:    form,
-        signal:  AbortSignal.timeout(60_000),
-      });
     } else {
-      res = await fetch(`${GOWA_URL}/send/message`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Device-Id': GOWA_DEVICE_ID },
-        body:    JSON.stringify({ phone, message: addVariation(message) }),
-        signal:  AbortSignal.timeout(30_000),
-      });
+      await sock.sendMessage(jid, { text: addVariation(message) });
     }
-
-    if (res.ok) return { ok: true };
-    const raw = await res.text().catch(() => '');
-    let errMsg = raw.slice(0, 200) || `HTTP ${res.status}`;
-    try {
-      const j = JSON.parse(raw);
-      if (j?.message) errMsg = j.message;
-      if (j?.error)   errMsg = j.error;
-    } catch { /* not JSON */ }
-    return { ok: false, error: errMsg };
+    return { ok: true };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    if (msg.includes('abort') || msg.includes('timeout')) {
-      return { ok: false, error: "Timeout — GoWA n'a pas répondu à temps" };
-    }
     return { ok: false, error: msg.slice(0, 200) };
   }
 }
@@ -116,18 +127,16 @@ export function stopCampaign(campaignId: string): void {
   stopFlags.set(campaignId, true);
 }
 
-export function isCampaignRunning(campaignId: string): boolean {
-  return stopFlags.get(campaignId) === false;
-}
-
 export async function sendCampaign(campaignId: string): Promise<void> {
   stopFlags.set(campaignId, false);
+
+  let sock: WASocket | null = null;
 
   try {
     const campaign = await prisma.campaign.findUnique({ where: { id: campaignId } });
     if (!campaign) throw new Error('Campaign not found');
 
-    // ── Resume detection ──────────────────────────────────────────────────────
+    // ── Resume detection ────────────────────────────────────────────────────
     const existingLogs = await prisma.campaignLog.findMany({
       where:  { campaignId },
       select: { phone: true, status: true },
@@ -148,7 +157,7 @@ export async function sendCampaign(campaignId: string): Promise<void> {
       },
     });
 
-    // ── Resolve phones ────────────────────────────────────────────────────────
+    // ── Resolve phones ──────────────────────────────────────────────────────
     let rawPhones: string[] = [];
     if (campaign.source === 'DB_CLIENTS') {
       const clients = await prisma.client.findMany({
@@ -167,9 +176,7 @@ export async function sendCampaign(campaignId: string): Promise<void> {
       if (n && !seen.has(n)) { seen.add(n); phones.push(n); }
     }
 
-    // Skip already-sent on resume; update targets only on fresh start
     const remainingPhones = phones.filter(p => !alreadySent.has(p));
-
     if (!isResume) {
       await prisma.campaign.update({
         where: { id: campaignId },
@@ -177,24 +184,35 @@ export async function sendCampaign(campaignId: string): Promise<void> {
       });
     }
 
-    for (const phone of remainingPhones) {
-      // ── Stop: in-memory fast path ─────────────────────────────────────────
-      if (stopFlags.get(campaignId)) return;
+    if (remainingPhones.length === 0) {
+      await prisma.campaign.update({
+        where: { id: campaignId },
+        data:  { status: 'DONE', totalSent: sent, totalFailed: failed },
+      });
+      return;
+    }
 
-      // ── Stop: DB check (cross-process — real Vercel fix) ──────────────────
+    // ── Open Baileys connection once ────────────────────────────────────────
+    sock = await openWASocket(async () => {
+      // QR required = WhatsApp not connected
+      await prisma.campaign.update({
+        where: { id: campaignId },
+        data:  { status: 'STOPPED', stopReason: 'DISCONNECTED', totalSent: sent, totalFailed: failed },
+      });
+    });
+
+    // ── Send loop ───────────────────────────────────────────────────────────
+    for (const phone of remainingPhones) {
+      if (stopFlags.get(campaignId)) break;
+
+      // DB stop check (cross-process)
       const freshRow = await prisma.campaign.findUnique({
         where:  { id: campaignId },
         select: { status: true },
       });
-      if (!freshRow || freshRow.status === 'STOPPED') {
-        await prisma.campaign.update({
-          where: { id: campaignId },
-          data:  { totalSent: sent, totalFailed: failed },
-        });
-        return;
-      }
+      if (!freshRow || freshRow.status === 'STOPPED') break;
 
-      // ── Daily limit (check every 10 sends) ────────────────────────────────
+      // Daily limit check every 10 sends
       if (sent > 0 && sent % 10 === 0) {
         const todaySent = await prisma.campaignLog.count({
           where: { campaignId, status: 'SENT', sentAt: { gte: startOfDay(new Date()) } },
@@ -202,14 +220,13 @@ export async function sendCampaign(campaignId: string): Promise<void> {
         if (todaySent >= campaign.dailyLimit) {
           await prisma.campaign.update({
             where: { id: campaignId },
-            data:  { status: 'STOPPED', totalSent: sent, totalFailed: failed, stopReason: 'DAILY_LIMIT' },
+            data:  { status: 'STOPPED', stopReason: 'DAILY_LIMIT', totalSent: sent, totalFailed: failed },
           });
           return;
         }
       }
 
-      // ── Send ──────────────────────────────────────────────────────────────
-      const result = await sendWA(toWaPhone(phone), campaign.message, campaign.mediaUrl ?? null);
+      const result = await sendWA(sock, phone, campaign.message, campaign.mediaUrl ?? null);
 
       if (result.ok) {
         sent++;
@@ -227,10 +244,17 @@ export async function sendCampaign(campaignId: string): Promise<void> {
       await sleep(Math.random() < 1 / 8 ? longPause() : humanDelay(campaign.baseDelaySeconds));
     }
 
-    await prisma.campaign.update({
-      where: { id: campaignId },
-      data:  { status: 'DONE', totalSent: sent, totalFailed: failed },
+    // ── Final status ────────────────────────────────────────────────────────
+    const finalRow = await prisma.campaign.findUnique({
+      where:  { id: campaignId },
+      select: { status: true },
     });
+    if (finalRow?.status === 'RUNNING') {
+      await prisma.campaign.update({
+        where: { id: campaignId },
+        data:  { status: 'DONE', totalSent: sent, totalFailed: failed },
+      });
+    }
   } catch (err) {
     console.error(`[Campaign ${campaignId}] Fatal:`, err);
     await prisma.campaign
@@ -238,5 +262,6 @@ export async function sendCampaign(campaignId: string): Promise<void> {
       .catch(() => {});
   } finally {
     stopFlags.delete(campaignId);
+    try { sock?.ws?.close(); } catch { /* ignore */ }
   }
 }

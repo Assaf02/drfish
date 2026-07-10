@@ -59,6 +59,7 @@ const nextConfig = {
   experimental: {
     serverActions: { bodySizeLimit: '2mb' },
   },
+  serverExternalPackages: ['@whiskeysockets/baileys', 'pino', 'pino-pretty'],
 };
 
 module.exports = withPWA(nextConfig);

@@ -205,3 +205,12 @@ model CampaignLog {
 
   @@map("campaign_logs")
 }
+
+model WhatsAppSession {
+  id        String   @id @default("singleton")
+  creds     Json?
+  keys      Json?
+  updatedAt DateTime @updatedAt
+
+  @@map("whatsapp_sessions")
+}
