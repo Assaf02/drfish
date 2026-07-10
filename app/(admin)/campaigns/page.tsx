@@ -94,40 +94,17 @@ export default function CampaignsPage() {
     }
   }
 
-  const esRef = useRef<EventSource | null>(null);
+  useEffect(() => { load(); checkGowa(); fetchQr(); }, []);
 
-  useEffect(() => {
-    load();
-    checkGowa();
-    return () => { esRef.current?.close(); };
-  }, []);
+  // ── Fetch QR ───────────────────────────────────────────────────────────────
 
-  // ── Fetch QR via SSE ───────────────────────────────────────────────────────
-
-  function fetchQr() {
-    esRef.current?.close();
-    setGowa((g) => ({ ...g, qrImage: undefined }));
-
-    const es = new EventSource('/api/whatsapp/qr');
-    esRef.current = es;
-
-    es.onmessage = (e) => {
-      try {
-        const msg = JSON.parse(e.data);
-        if (msg.type === 'qr') {
-          setGowa((g) => ({ ...g, qrImage: msg.qrDataUrl }));
-        }
-        if (msg.type === 'connected') {
-          setGowa({ connected: true, unreachable: false, loading: false });
-          es.close();
-        }
-        if (msg.type === 'disconnected' || msg.type === 'error') {
-          es.close();
-        }
-      } catch { /* ignore */ }
-    };
-
-    es.onerror = () => es.close();
+  async function fetchQr() {
+    try {
+      const res  = await fetch('/api/whatsapp/qr', { cache: 'no-store' });
+      const data = await res.json();
+      const img  = data?.qrImage ?? null;
+      setGowa((g) => ({ ...g, qrImage: img ?? undefined }));
+    } catch { /* ignore */ }
   }
 
   // ── Start campaign ──────────────────────────────────────────────────────────

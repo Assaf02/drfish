@@ -1,30 +1,36 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
 
-export const dynamic = 'force-dynamic';
+const GOWA_URL       = process.env.GOWA_URL        ?? '';
+const GOWA_DEVICE_ID = process.env.GOWA_DEVICE_ID ?? 'drfish';
 
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (session?.user?.role !== 'ADMIN')
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  if (!GOWA_URL)
+    return NextResponse.json({ connected: false, unreachable: true, reason: 'not_configured' });
+
   try {
-    const waSession = await prisma.whatsAppSession.findUnique({ where: { id: 'singleton' } });
+    // GET /devices lists all devices without requiring device_id
+    const res = await fetch(`${GOWA_URL}/devices`, {
+      signal: AbortSignal.timeout(5_000),
+      cache:  'no-store',
+    });
 
-    // If no session at all, clearly disconnected
-    if (!waSession?.creds) {
-      return NextResponse.json({ connected: false, unreachable: false });
-    }
+    if (!res.ok) return NextResponse.json({ connected: false, unreachable: false });
 
-    // If creds exist, we consider WhatsApp as "ready" (credentials stored = previously connected)
-    // The real check happens at send time
-    const creds = waSession.creds as Record<string, unknown>;
-    const connected = !!(creds?.me || creds?.account || creds?.registered);
+    const data    = await res.json();
+    const devices = Array.isArray(data?.results) ? data.results : [];
+    const device  = devices.find((d: { id?: string; device?: string; state?: string }) =>
+      (d.id ?? d.device) === GOWA_DEVICE_ID
+    );
 
-    return NextResponse.json({ connected, unreachable: false });
+    const connected = device?.state === 'logged_in';
+    return NextResponse.json({ connected, unreachable: false, deviceState: device?.state ?? null });
   } catch {
-    return NextResponse.json({ connected: false, unreachable: false });
+    return NextResponse.json({ connected: false, unreachable: true });
   }
 }
