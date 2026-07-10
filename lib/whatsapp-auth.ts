@@ -19,12 +19,10 @@ export async function useDbAuthState(): Promise<{
   const credsRaw = session?.creds;
   const keysRaw  = (session?.keys ?? {}) as Record<string, Record<string, unknown>>;
 
-  // Deserialize creds (restoring Buffers)
   const creds = credsRaw
     ? JSON.parse(JSON.stringify(credsRaw), BufferJSON.reviver)
     : initAuthCreds();
 
-  // Deserialize keys
   const keys: Record<string, Record<string, unknown>> = JSON.parse(
     JSON.stringify(keysRaw),
     BufferJSON.reviver,
