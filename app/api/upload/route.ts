@@ -34,20 +34,25 @@ export async function POST(req: NextRequest) {
   if (!ALLOWED_TYPES.includes(file.type))
     return NextResponse.json({ error: 'Type de fichier non supporté' }, { status: 415 });
 
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+  const blobToken = process.env.BLOB_READ_WRITE_TOKEN;
+  if (!blobToken) {
     return NextResponse.json(
-      { error: 'BLOB_READ_WRITE_TOKEN non configuré — active Vercel Blob Storage dans le dashboard Vercel' },
+      { error: 'BLOB_READ_WRITE_TOKEN manquant — redéploie le projet après avoir connecté le Blob store' },
       { status: 500 },
     );
   }
 
   let blob;
   try {
-    blob = await put(`campaigns/${Date.now()}-${file.name}`, file, { access: 'public' });
+    blob = await put(`campaigns/${Date.now()}-${file.name}`, file, {
+      access: 'public',
+      token:  blobToken,
+    });
   } catch (err) {
-    console.error('[upload] Vercel Blob error:', err);
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[upload] Vercel Blob error:', msg);
     return NextResponse.json(
-      { error: 'Erreur de stockage — vérifie que Vercel Blob Storage est activé sur ce projet' },
+      { error: `Erreur Blob: ${msg}` },
       { status: 500 },
     );
   }
