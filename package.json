@@ -11,7 +11,7 @@
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate && node -e \"try{require('fs').writeFileSync('node_modules/@whiskeysockets/baileys/lib/Defaults/baileys-version.json','{\\\"version\\\":[2,3000,1035194821]}')}catch(e){}\""
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.4.2",
@@ -56,12 +56,15 @@
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
+    "@types/qrcode-terminal": "^0.12.2",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "dotenv": "^17.4.2",
     "eslint": "^8",
     "eslint-config-next": "14.2.29",
     "postcss": "^8",
     "prisma": "^5.14.0",
+    "qrcode-terminal": "^0.12.0",
     "tailwindcss": "^3.4.1",
     "tsx": "^4.15.6",
     "typescript": "^5"

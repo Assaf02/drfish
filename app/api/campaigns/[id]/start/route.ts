@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { sendCampaign } from '@/lib/campaignRunner';
 
 export async function POST(
   _req: NextRequest,
@@ -18,10 +17,11 @@ export async function POST(
   if (campaign.status === 'RUNNING')
     return NextResponse.json({ error: 'Already running' }, { status: 409 });
 
-  // Fire and forget — responds immediately
-  sendCampaign(params.id).catch((err) =>
-    console.error('[campaignRunner]', err),
-  );
+  // Mark as RUNNING — the browser drives message sending via /send-next
+  await prisma.campaign.update({
+    where: { id: params.id },
+    data:  { status: 'RUNNING', stopReason: null },
+  });
 
   return NextResponse.json({ success: true });
 }

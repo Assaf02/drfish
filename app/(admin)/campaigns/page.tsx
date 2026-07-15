@@ -95,6 +95,8 @@ export default function CampaignsPage() {
   }
 
   const esRef = useRef<EventSource | null>(null);
+  const [qrLoading, setQrLoading] = useState(false);
+  const [qrTimeout, setQrTimeout] = useState(false);
 
   useEffect(() => {
     load();
@@ -107,6 +109,14 @@ export default function CampaignsPage() {
   function fetchQr() {
     esRef.current?.close();
     setGowa((g) => ({ ...g, qrImage: undefined }));
+    setQrLoading(true);
+    setQrTimeout(false);
+
+    // Fallback: if no QR after 12s, show terminal instructions
+    const fallbackTimer = setTimeout(() => {
+      setQrLoading(false);
+      setQrTimeout(true);
+    }, 12_000);
 
     const es = new EventSource('/api/whatsapp/qr');
     esRef.current = es;
@@ -115,19 +125,30 @@ export default function CampaignsPage() {
       try {
         const msg = JSON.parse(e.data);
         if (msg.type === 'qr') {
+          clearTimeout(fallbackTimer);
+          setQrLoading(false);
+          setQrTimeout(false);
           setGowa((g) => ({ ...g, qrImage: msg.qrDataUrl }));
         }
         if (msg.type === 'connected') {
+          clearTimeout(fallbackTimer);
+          setQrLoading(false);
           setGowa({ connected: true, unreachable: false, loading: false });
           es.close();
         }
         if (msg.type === 'disconnected' || msg.type === 'error') {
+          clearTimeout(fallbackTimer);
+          setQrLoading(false);
           es.close();
         }
       } catch { /* ignore */ }
     };
 
-    es.onerror = () => es.close();
+    es.onerror = () => {
+      clearTimeout(fallbackTimer);
+      setQrLoading(false);
+      es.close();
+    };
   }
 
   // ── Start campaign ──────────────────────────────────────────────────────────
@@ -149,8 +170,8 @@ export default function CampaignsPage() {
   return (
     <div className="space-y-6 animate-fade-in">
 
-      {/* ── GoWA status banner ─────────────────────────────────────────────── */}
-      <GowaStatusBanner gowa={gowa} onRefresh={checkGowa} onShowQr={fetchQr} />
+      {/* ── WhatsApp status banner ─────────────────────────────────────────── */}
+      <GowaStatusBanner gowa={gowa} onRefresh={checkGowa} onShowQr={fetchQr} qrLoading={qrLoading} qrTimeout={qrTimeout} />
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between gap-4">
@@ -265,11 +286,13 @@ export default function CampaignsPage() {
 // ── GoWA status banner ─────────────────────────────────────────────────────────
 
 function GowaStatusBanner({
-  gowa, onRefresh, onShowQr,
+  gowa, onRefresh, onShowQr, qrLoading, qrTimeout,
 }: {
-  gowa: GowaState;
+  gowa:      GowaState;
   onRefresh: () => void;
   onShowQr:  () => void;
+  qrLoading: boolean;
+  qrTimeout: boolean;
 }) {
   if (gowa.loading) return null;
 
@@ -279,7 +302,7 @@ function GowaStatusBanner({
         style={{ background: 'rgba(26,122,74,0.06)', border: '1px solid rgba(26,122,74,0.15)' }}>
         <Wifi size={16} style={{ color: '#16a34a' }} />
         <p className="text-sm font-semibold" style={{ color: '#15803d' }}>
-          WhatsApp connecté — GoWA prêt à envoyer
+          WhatsApp connecté — prêt à envoyer
         </p>
         <button onClick={onRefresh} className="ml-auto text-xs"
           style={{ color: 'rgba(21,128,61,0.6)' }}>
@@ -296,31 +319,81 @@ function GowaStatusBanner({
         <WifiOff size={16} style={{ color: '#dc2626', flexShrink: 0, marginTop: 2 }} />
         <div className="flex-1">
           <p className="text-sm font-semibold" style={{ color: '#b91c1c' }}>
-            {gowa.unreachable ? 'GoWA injoignable' : 'WhatsApp déconnecté'}
+            WhatsApp déconnecté
           </p>
           <p className="text-xs mt-0.5" style={{ color: 'var(--gray-400)' }}>
-            {gowa.unreachable
-              ? 'Vérifiez que GoWA tourne et que GOWA_URL est configurée sur Vercel.'
-              : 'Scannez le QR code ci-dessous pour connecter WhatsApp.'}
+            {qrLoading
+              ? 'Connexion à WhatsApp en cours…'
+              : 'Cliquez sur Actualiser pour vérifier, ou Scanner QR pour connecter.'}
           </p>
         </div>
-        <button
-          onClick={() => { onShowQr(); onRefresh(); }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
-          style={{ background: 'rgba(220,38,38,0.08)', color: '#b91c1c' }}
-        >
-          <RefreshCw size={11} /> Actualiser
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onRefresh}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
+            style={{ background: 'rgba(220,38,38,0.06)', color: '#b91c1c' }}
+          >
+            <RefreshCw size={11} /> Actualiser
+          </button>
+          <button
+            onClick={onShowQr}
+            disabled={qrLoading}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50"
+            style={{ background: 'rgba(220,38,38,0.12)', color: '#b91c1c' }}
+          >
+            {qrLoading
+              ? <Loader2 size={11} className="animate-spin" />
+              : <MessageCircle size={11} />}
+            Scanner QR
+          </button>
+        </div>
       </div>
+
+      {/* QR loading state */}
+      {qrLoading && !gowa.qrImage && (
+        <div className="px-5 pb-5 flex items-center gap-3">
+          <div className="w-40 h-40 rounded-xl flex items-center justify-center"
+            style={{ border: '1px dashed rgba(220,38,38,0.3)', background: 'rgba(220,38,38,0.03)' }}>
+            <Loader2 size={24} className="animate-spin" style={{ color: '#dc2626', opacity: 0.5 }} />
+          </div>
+          <p className="text-xs" style={{ color: 'var(--gray-400)' }}>
+            Connexion à WhatsApp…<br/>Le QR code va apparaître dans quelques secondes.
+          </p>
+        </div>
+      )}
+
+      {/* QR image */}
       {gowa.qrImage && (
         <div className="px-5 pb-5 flex gap-4 items-start">
           <img src={gowa.qrImage} alt="QR WhatsApp" className="w-40 h-40 rounded-xl border"
             style={{ borderColor: 'var(--gray-100)' }} />
           <div className="text-xs space-y-1" style={{ color: 'var(--gray-400)' }}>
-            <p className="font-semibold" style={{ color: 'var(--navy)' }}>Comment scanner :</p>
-            <p>1. Ouvrez WhatsApp sur votre téléphone</p>
-            <p>2. Allez dans Paramètres → Appareils liés</p>
-            <p>3. Scannez ce QR code</p>
+            <p className="font-semibold" style={{ color: 'var(--navy)' }}>Scanner rapidement :</p>
+            <p>1. Ouvrez WhatsApp</p>
+            <p>2. Appareils liés → Lier un appareil</p>
+            <p>3. Pointez la caméra sur ce QR</p>
+          </div>
+        </div>
+      )}
+
+      {/* Fallback: terminal instructions when QR timed out */}
+      {qrTimeout && !gowa.qrImage && (
+        <div className="px-5 pb-5">
+          <div className="rounded-xl p-4 text-xs space-y-2"
+            style={{ background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.08)' }}>
+            <p className="font-semibold" style={{ color: 'var(--navy)' }}>
+              Connexion via terminal (plus fiable)
+            </p>
+            <p style={{ color: 'var(--gray-400)' }}>
+              Le QR n&apos;a pas pu s&apos;afficher ici. Lancez cette commande dans votre terminal&nbsp;:
+            </p>
+            <code className="block px-3 py-2 rounded-lg font-mono text-xs select-all"
+              style={{ background: 'rgba(10,22,40,0.06)', color: 'var(--navy)', userSelect: 'all' }}>
+              npx tsx scripts/wa-setup.ts
+            </code>
+            <p style={{ color: 'var(--gray-400)' }}>
+              Scannez le QR dans le terminal, puis cliquez sur <strong>Actualiser</strong>.
+            </p>
           </div>
         </div>
       )}
@@ -412,8 +485,8 @@ function NewCampaignModal({
       setMediaFileName(data.fileName);
       setMediaType(data.type);
       toast.success('Fichier joint !');
-    } catch {
-      toast.error('Erreur lors de l\'upload');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Erreur réseau lors de l\'upload');
     } finally {
       setUploading(false);
     }

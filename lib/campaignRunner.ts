@@ -1,7 +1,7 @@
 import { prisma } from './prisma';
 import { normalizePhone as normPhone } from './phoneUtils';
-import { useDbAuthState } from './whatsapp-auth';
-import makeWASocket, { DisconnectReason, WASocket } from '@whiskeysockets/baileys';
+import { useDbAuthState, clearWhatsAppSession } from './whatsapp-auth';
+import makeWASocket, { DisconnectReason, fetchLatestBaileysVersion, WASocket } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
 import pino from 'pino';
 import { startOfDay } from 'date-fns';
@@ -35,8 +35,10 @@ function openWASocket(): Promise<WASocket> {
   return new Promise(async (resolve, reject) => {
     try {
       const { state, saveCreds } = await useDbAuthState();
+      const { version } = await fetchLatestBaileysVersion().catch(() => ({ version: [2, 3000, 1035194821] as [number, number, number], isLatest: false }));
 
       const sock = makeWASocket({
+        version,
         auth: state,
         printQRInTerminal: false,
         logger: pino({ level: 'silent' }),
@@ -54,9 +56,10 @@ function openWASocket(): Promise<WASocket> {
 
       sock.ev.on('connection.update', ({ connection, lastDisconnect, qr }) => {
         if (qr) {
-          // QR needed = session expired or not set up
+          // QR = session expired in WhatsApp. Clear DB so status shows "disconnected".
           clearTimeout(timeout);
           try { sock.ws.close(); } catch { /* ignore */ }
+          clearWhatsAppSession().catch(() => {});
           reject(new Error('WhatsApp déconnecté — scannez le QR code depuis la page Campagnes'));
         }
         if (connection === 'open') {

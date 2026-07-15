@@ -61,46 +61,120 @@ function statusBadge(status: CampaignStatus) {
 export default function CampaignDetailPage() {
   const router    = useRouter();
   const { id }    = useParams<{ id: string }>();
-  const [campaign, setCampaign] = useState<Campaign | null>(null);
-  const [loading,  setLoading]  = useState(true);
-  const [stopping, setStopping] = useState(false);
-  const [starting, setStarting] = useState(false);
-  const [retrying, setRetrying] = useState(false);
-  const pollRef = useRef<ReturnType<typeof setInterval>>();
+  const [campaign,  setCampaign]  = useState<Campaign | null>(null);
+  const [loading,   setLoading]   = useState(true);
+  const [stopping,  setStopping]  = useState(false);
+  const [starting,  setStarting]  = useState(false);
+  const [retrying,  setRetrying]  = useState(false);
+  const [sending,   setSending]   = useState(false);  // browser loop running
+  const [countdown, setCountdown] = useState<number | null>(null); // seconds until next send
+  const sendingRef  = useRef(false);
+  const timerRef    = useRef<ReturnType<typeof setInterval>>();
+  const countdownIntervalRef = useRef<ReturnType<typeof setInterval>>();
 
   // ── Fetch ────────────────────────────────────────────────────────────────
 
   const fetchCampaign = useCallback(async () => {
-    const res  = await fetch(`/api/campaigns/${id}`, { cache: 'no-store' });
+    const res = await fetch(`/api/campaigns/${id}`, { cache: 'no-store' });
     if (!res.ok) return;
-    const data = await res.json();
+    const data = await res.json() as Campaign;
     setCampaign(data);
     setLoading(false);
-    return data as Campaign;
+    return data;
   }, [id]);
 
-  // ── Polling — every 2s while RUNNING ────────────────────────────────────
+  useEffect(() => { fetchCampaign(); }, [fetchCampaign]);
 
-  useEffect(() => {
-    fetchCampaign();
+  // ── Browser-driven send loop ─────────────────────────────────────────────
 
-    pollRef.current = setInterval(async () => {
-      const data = await fetchCampaign();
-      if (data && data.status !== 'RUNNING') {
-        clearInterval(pollRef.current);
+  const stopSending = useCallback(() => {
+    sendingRef.current = false;
+    setSending(false);
+    setCountdown(null);
+    clearInterval(countdownIntervalRef.current);
+  }, []);
+
+  const startSendLoop = useCallback(async () => {
+    if (sendingRef.current) return;
+    sendingRef.current = true;
+    setSending(true);
+
+    const loop = async () => {
+      if (!sendingRef.current) return;
+
+      try {
+        const res  = await fetch(`/api/campaigns/${id}/send-next`, { method: 'POST' });
+        const data = await res.json();
+
+        // Refresh campaign data
+        await fetchCampaign();
+
+        if (data.status === 'done') {
+          toast.success('Campagne terminée !');
+          stopSending();
+          return;
+        }
+
+        if (data.status === 'daily_limit') {
+          toast.info(`Limite journalière atteinte (${data.dailyLimit}/j). Relancez demain.`);
+          stopSending();
+          return;
+        }
+
+        if (data.status === 'disconnected') {
+          toast.error('WhatsApp déconnecté — reconnectez depuis la page Campagnes');
+          stopSending();
+          await fetch(`/api/campaigns/${id}/stop`, { method: 'POST' }).catch(() => {});
+          fetchCampaign();
+          return;
+        }
+
+        if (data.status === 'not_found') {
+          stopSending();
+          return;
+        }
+
+        // Schedule next send after delayMs
+        const delayMs = (data.delayMs ?? 14_000) as number;
+        const delaySec = Math.ceil(delayMs / 1_000);
+        setCountdown(delaySec);
+
+        clearInterval(countdownIntervalRef.current);
+        let remaining = delaySec;
+        countdownIntervalRef.current = setInterval(() => {
+          remaining -= 1;
+          setCountdown(remaining > 0 ? remaining : null);
+          if (remaining <= 0) clearInterval(countdownIntervalRef.current);
+        }, 1_000);
+
+        timerRef.current = setTimeout(loop, delayMs);
+      } catch {
+        // Network error — retry in 5s
+        timerRef.current = setTimeout(loop, 5_000);
       }
-    }, 2_000);
+    };
 
-    return () => clearInterval(pollRef.current);
-  }, [fetchCampaign]);
+    loop();
+  }, [id, fetchCampaign, stopSending]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      sendingRef.current = false;
+      clearTimeout(timerRef.current);
+      clearInterval(countdownIntervalRef.current);
+    };
+  }, []);
 
   // ── Actions ──────────────────────────────────────────────────────────────
 
   async function stop() {
     setStopping(true);
+    stopSending();
     try {
       await fetch(`/api/campaigns/${id}/stop`, { method: 'POST' });
-      toast.success('Arrêt en cours…');
+      toast.success('Campagne arrêtée');
+      fetchCampaign();
     } finally {
       setStopping(false);
     }
@@ -110,14 +184,17 @@ export default function CampaignDetailPage() {
     setStarting(true);
     try {
       const res = await fetch(`/api/campaigns/${id}/start`, { method: 'POST' });
-      if (!res.ok) throw new Error((await res.json()).error);
-      toast.success('Campagne démarrée !');
-      // Re-start polling
-      clearInterval(pollRef.current);
-      pollRef.current = setInterval(async () => {
-        const data = await fetchCampaign();
-        if (data && data.status !== 'RUNNING') clearInterval(pollRef.current);
-      }, 2_000);
+      if (!res.ok) {
+        const err = await res.json();
+        if (err.error === 'Already running') {
+          // Already marked running — just start the browser loop
+          startSendLoop();
+          return;
+        }
+        throw new Error(err.error);
+      }
+      toast.success('Envoi démarré !');
+      startSendLoop();
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'Erreur');
     } finally {
@@ -225,8 +302,9 @@ export default function CampaignDetailPage() {
         </div>
 
         {/* Action buttons */}
-        <div className="flex gap-2">
-          {campaign.status === 'RUNNING' && (
+        <div className="flex gap-2 flex-wrap">
+          {/* Stop */}
+          {(campaign.status === 'RUNNING' || sending) && (
             <button
               onClick={stop}
               disabled={stopping}
@@ -237,17 +315,20 @@ export default function CampaignDetailPage() {
               Arrêter
             </button>
           )}
-          {(campaign.status === 'DRAFT' || campaign.status === 'STOPPED' || campaign.status === 'SCHEDULED') && (
+          {/* Start / Resume */}
+          {(campaign.status === 'DRAFT' || campaign.status === 'STOPPED' || campaign.status === 'SCHEDULED' ||
+            (campaign.status === 'RUNNING' && !sending)) && (
             <button
               onClick={start}
-              disabled={starting}
+              disabled={starting || sending}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95"
               style={{ background: 'var(--navy)', color: 'white', boxShadow: '0 2px 8px rgba(10,22,40,0.2)' }}
             >
               {starting ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
-              Démarrer
+              {campaign.status === 'RUNNING' && !sending ? 'Reprendre' : 'Démarrer'}
             </button>
           )}
+          {/* Retry failed */}
           {(campaign.status === 'DONE' || campaign.status === 'STOPPED') && campaign.totalFailed > 0 && (
             <button
               onClick={retryFailed}
@@ -289,6 +370,14 @@ export default function CampaignDetailPage() {
           <p className="text-xs mt-2" style={{ color: 'var(--gray-400)' }}>
             {done} / {campaign.totalTargets} traités
             {remaining > 0 && ` — ${remaining} restants`}
+            {sending && countdown !== null && (
+              <span style={{ color: 'var(--blue)' }}>
+                {' · '}prochain envoi dans {countdown}s
+              </span>
+            )}
+            {sending && countdown === null && (
+              <span style={{ color: 'var(--blue)' }}>{' · '}envoi en cours…</span>
+            )}
           </p>
         </div>
       )}
@@ -315,10 +404,10 @@ export default function CampaignDetailPage() {
           <AlertTriangle size={16} style={{ color: '#dc2626', flexShrink: 0 }} />
           <div className="flex-1">
             <p className="text-sm font-semibold" style={{ color: '#b91c1c' }}>
-              WhatsApp déconnecté en cours d&apos;envoi
+              WhatsApp déconnecté — session expirée
             </p>
             <p className="text-xs mt-0.5" style={{ color: 'var(--gray-400)' }}>
-              Allez dans <strong>Campagnes</strong> → cliquez <strong>Actualiser</strong> → scannez le QR code → puis redémarrez
+              Reconnectez WhatsApp depuis la page <strong>Campagnes</strong>, puis cliquez <strong>Démarrer</strong> ici pour reprendre.
             </p>
           </div>
         </div>
