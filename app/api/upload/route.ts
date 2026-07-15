@@ -1,4 +1,3 @@
-import { put } from '@vercel/blob';
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -13,14 +12,22 @@ const ALLOWED_TYPES = [
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'application/vnd.ms-excel',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  'application/vnd.ms-powerpoint',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
 ];
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (session?.user?.role !== 'ADMIN')
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const cloudName   = process.env.CLOUDINARY_CLOUD_NAME;
+  const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET;
+
+  if (!cloudName || !uploadPreset) {
+    return NextResponse.json(
+      { error: 'Cloudinary non configuré — ajoute CLOUDINARY_CLOUD_NAME et CLOUDINARY_UPLOAD_PRESET dans les variables Vercel' },
+      { status: 500 },
+    );
+  }
 
   const formData = await req.formData();
   const file = formData.get('file') as File | null;
@@ -34,31 +41,34 @@ export async function POST(req: NextRequest) {
   if (!ALLOWED_TYPES.includes(file.type))
     return NextResponse.json({ error: 'Type de fichier non supporté' }, { status: 415 });
 
-  const blobToken = process.env.BLOB_READ_WRITE_TOKEN;
-  if (!blobToken) {
-    return NextResponse.json(
-      { error: 'BLOB_READ_WRITE_TOKEN manquant — redéploie le projet après avoir connecté le Blob store' },
-      { status: 500 },
+  // Forward to Cloudinary
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const blob   = new Blob([buffer], { type: file.type });
+
+  const cloudForm = new FormData();
+  cloudForm.append('file', blob, file.name);
+  cloudForm.append('upload_preset', uploadPreset);
+  cloudForm.append('folder', 'drfish-campaigns');
+
+  let cloudRes: Response;
+  try {
+    cloudRes = await fetch(
+      `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
+      { method: 'POST', body: cloudForm },
     );
+  } catch (err) {
+    return NextResponse.json({ error: `Erreur réseau Cloudinary: ${String(err)}` }, { status: 500 });
   }
 
-  let blob;
-  try {
-    blob = await put(`campaigns/${Date.now()}-${file.name}`, file, {
-      access: 'public',
-      token:  blobToken,
-    });
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error('[upload] Vercel Blob error:', msg);
-    return NextResponse.json(
-      { error: `Erreur Blob: ${msg}` },
-      { status: 500 },
-    );
+  const data = await cloudRes.json() as Record<string, unknown>;
+
+  if (!cloudRes.ok) {
+    const msg = (data.error as { message?: string })?.message ?? 'Erreur Cloudinary';
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 
   return NextResponse.json({
-    url:      blob.url,
+    url:      data.secure_url as string,
     fileName: file.name,
     size:     file.size,
     type:     file.type,
