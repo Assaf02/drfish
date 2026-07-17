@@ -31,14 +31,15 @@ function addVariation(text: string) {
   return text + ['​', '‌', '‍'][Math.floor(Math.random() * 3)];
 }
 
-async function openWASocket(): Promise<WASocket> {
+// Total budget for the entire function — keeps us safe under Vercel Hobby's 10s limit
+const TOTAL_BUDGET_MS = 9_000;
+
+async function openWASocket(budgetMs: number): Promise<WASocket> {
   const { state, saveCreds } = await useDbAuthState();
   if (!state.creds.me) throw new Error('WA_NOT_CONNECTED');
 
-  const { version } = await fetchLatestBaileysVersion().catch(() => ({
-    version: [2, 3000, 1035194821] as [number, number, number],
-    isLatest: false,
-  }));
+  // Use cached version to avoid a GitHub round-trip on every request
+  const version: [number, number, number] = [2, 3000, 1035194821];
 
   return new Promise<WASocket>((resolve, reject) => {
     const sock = makeWASocket({
@@ -47,7 +48,7 @@ async function openWASocket(): Promise<WASocket> {
       printQRInTerminal: false,
       logger: pino({ level: 'silent' }),
       browser: ['Dr Fish CRM', 'Chrome', '120.0'],
-      connectTimeoutMs: 20_000,
+      connectTimeoutMs: Math.min(budgetMs - 500, 7_000),
       defaultQueryTimeoutMs: undefined,
     });
 
@@ -56,7 +57,7 @@ async function openWASocket(): Promise<WASocket> {
     const timeout = setTimeout(() => {
       try { sock.ws.close(); } catch { /* ignore */ }
       reject(new Error('WA_TIMEOUT'));
-    }, 22_000);
+    }, Math.min(budgetMs - 200, 7_500));
 
     sock.ev.on('connection.update', async ({ connection, lastDisconnect, qr }) => {
       if (qr) {
@@ -83,6 +84,10 @@ export async function POST(
   _req: NextRequest,
   { params }: { params: { id: string } },
 ) {
+  const startedAt = Date.now();
+  function elapsed() { return Date.now() - startedAt; }
+  function budgetLeft() { return TOTAL_BUDGET_MS - elapsed(); }
+
   const session = await getServerSession(authOptions);
   if (session?.user?.role !== 'ADMIN')
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -142,10 +147,15 @@ export async function POST(
     return NextResponse.json({ status: 'done', totalSent: sent, totalFailed: failed });
   }
 
+  // Abort early if we're already running out of budget
+  if (budgetLeft() < 3_000) {
+    return NextResponse.json({ status: 'timeout', error: 'Budget épuisé avant connexion WA' });
+  }
+
   // Connect to WhatsApp and send
   let sock: WASocket | null = null;
   try {
-    sock = await openWASocket();
+    sock = await openWASocket(budgetLeft());
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     const waErr = msg === 'WA_NOT_CONNECTED' || msg === 'WA_QR_NEEDED' || msg === 'WA_LOGGED_OUT';
@@ -158,7 +168,7 @@ export async function POST(
   try {
     const jid = `${nextPhone}@s.whatsapp.net`;
     if (campaign.mediaUrl) {
-      const mediaRes = await fetch(campaign.mediaUrl, { signal: AbortSignal.timeout(15_000) });
+      const mediaRes = await fetch(campaign.mediaUrl, { signal: AbortSignal.timeout(Math.min(budgetLeft() - 1_500, 5_000)) });
       if (!mediaRes.ok) throw new Error(`Cannot fetch media: ${mediaRes.status}`);
       const buffer   = Buffer.from(await mediaRes.arrayBuffer());
       const mime     = mediaRes.headers.get('content-type') ?? 'application/octet-stream';

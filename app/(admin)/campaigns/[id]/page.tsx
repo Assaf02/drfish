@@ -129,8 +129,14 @@ export default function CampaignDetailPage() {
           return;
         }
 
-        if (data.status === 'not_found') {
+        if (data.status === 'not_found' || data.status === 'not_running') {
           stopSending();
+          return;
+        }
+
+        // WA connection timed out — wait 3s and retry (don't stop the loop)
+        if (data.status === 'timeout') {
+          timerRef.current = setTimeout(loop, 3_000);
           return;
         }
 
