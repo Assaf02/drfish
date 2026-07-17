@@ -108,21 +108,34 @@ export async function POST(
     return NextResponse.json({ status: 'daily_limit', dailyLimit: campaign.dailyLimit });
   }
 
+  // For DB_CLIENTS: cache phone list in campaign.phones on first call to avoid
+  // repeating an expensive join query (client + sales) on every send-next invocation.
+  if (campaign.source === 'DB_CLIENTS' && campaign.phones.length === 0) {
+    const clients = await prisma.client.findMany({
+      where: { phone: { not: null }, sales: { some: {} } },
+      select: { phone: true },
+    });
+    const seen0 = new Set<string>();
+    const normalized: string[] = [];
+    for (const c of clients) {
+      const n = normalizePhone(c.phone!);
+      if (n && !seen0.has(n)) { seen0.add(n); normalized.push(n); }
+    }
+    await prisma.campaign.update({
+      where: { id: campaignId },
+      data:  { phones: normalized, totalTargets: normalized.length },
+    });
+    // Return immediately — browser calls again right away with cached phones
+    return NextResponse.json({ status: 'initializing', totalTargets: normalized.length, delayMs: 800 });
+  }
+
   // Find next phone to send
   const existingLogs = await prisma.campaignLog.findMany({
     where: { campaignId }, select: { phone: true, status: true },
   });
   const alreadyDone = new Set(existingLogs.map(l => l.phone));
 
-  let rawPhones: string[] = [];
-  if (campaign.source === 'DB_CLIENTS') {
-    const clients = await prisma.client.findMany({
-      where: { phone: { not: null }, sales: { some: {} } }, select: { phone: true },
-    });
-    rawPhones = clients.map(c => c.phone!);
-  } else {
-    rawPhones = campaign.phones;
-  }
+  const rawPhones = campaign.phones; // Always use cached phones array
 
   const seen = new Set<string>();
   const phones: string[] = [];
@@ -130,11 +143,6 @@ export async function POST(
     const n = normalizePhone(raw);
     if (n && !seen.has(n)) { seen.add(n); phones.push(n); }
   }
-
-  await prisma.campaign.update({
-    where: { id: campaignId },
-    data:  { totalTargets: phones.length },
-  });
 
   const nextPhone = phones.find(p => !alreadyDone.has(p));
   if (!nextPhone) {

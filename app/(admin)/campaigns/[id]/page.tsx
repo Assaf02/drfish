@@ -66,6 +66,8 @@ export default function CampaignDetailPage() {
   const [stopping,  setStopping]  = useState(false);
   const [starting,  setStarting]  = useState(false);
   const [retrying,  setRetrying]  = useState(false);
+  const [newLimit,  setNewLimit]  = useState<string>('');
+  const [savingLimit, setSavingLimit] = useState(false);
   const [sending,   setSending]   = useState(false);  // browser loop running
   const [countdown, setCountdown] = useState<number | null>(null); // seconds until next send
   const sendingRef  = useRef(false);
@@ -134,9 +136,10 @@ export default function CampaignDetailPage() {
           return;
         }
 
-        // WA connection timed out — wait 3s and retry (don't stop the loop)
-        if (data.status === 'timeout') {
-          timerRef.current = setTimeout(loop, 3_000);
+        // Transient states: retry quickly without stopping the loop
+        if (data.status === 'timeout' || data.status === 'initializing') {
+          await fetchCampaign();
+          timerRef.current = setTimeout(loop, data.status === 'initializing' ? 1_000 : 3_000);
           return;
         }
 
@@ -205,6 +208,27 @@ export default function CampaignDetailPage() {
       toast.error(e instanceof Error ? e.message : 'Erreur');
     } finally {
       setStarting(false);
+    }
+  }
+
+  async function saveLimit() {
+    const val = Number(newLimit);
+    if (!val || val < 1) return;
+    setSavingLimit(true);
+    try {
+      const res = await fetch(`/api/campaigns/${id}`, {
+        method:  'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ dailyLimit: val }),
+      });
+      if (!res.ok) throw new Error('Erreur');
+      toast.success(`Limite mise à jour : ${val}/j`);
+      setNewLimit('');
+      await fetchCampaign();
+    } catch {
+      toast.error('Impossible de mettre à jour la limite');
+    } finally {
+      setSavingLimit(false);
     }
   }
 
@@ -390,16 +414,39 @@ export default function CampaignDetailPage() {
 
       {/* ── Daily limit banner ─────────────────────────────────────────────── */}
       {campaign.stopReason === 'DAILY_LIMIT' && (
-        <div className="flex items-center gap-3 px-5 py-3.5 rounded-2xl"
+        <div className="px-5 py-4 rounded-2xl space-y-3"
           style={{ background: 'rgba(192,92,0,0.06)', border: '1px solid rgba(192,92,0,0.2)' }}>
-          <AlertTriangle size={16} style={{ color: 'var(--orange)', flexShrink: 0 }} />
-          <div className="flex-1">
-            <p className="text-sm font-semibold" style={{ color: 'var(--orange)' }}>
-              Limite journalière atteinte ({campaign.dailyLimit} messages)
-            </p>
-            <p className="text-xs mt-0.5" style={{ color: 'var(--gray-400)' }}>
-              Redémarrez la campagne demain pour continuer les envois
-            </p>
+          <div className="flex items-center gap-3">
+            <AlertTriangle size={16} style={{ color: 'var(--orange)', flexShrink: 0 }} />
+            <div className="flex-1">
+              <p className="text-sm font-semibold" style={{ color: 'var(--orange)' }}>
+                Limite journalière atteinte ({campaign.dailyLimit} messages/j)
+              </p>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--gray-400)' }}>
+                Modifie la limite ci-dessous puis clique <strong>Reprendre</strong> pour continuer maintenant.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              min="1"
+              max="1000"
+              value={newLimit}
+              onChange={e => setNewLimit(e.target.value)}
+              placeholder={String(campaign.dailyLimit)}
+              className="w-28 px-3 py-1.5 rounded-lg text-sm border"
+              style={{ borderColor: 'rgba(192,92,0,0.3)', background: 'white' }}
+            />
+            <span className="text-xs" style={{ color: 'var(--gray-400)' }}>messages/jour</span>
+            <button
+              onClick={saveLimit}
+              disabled={savingLimit || !newLimit}
+              className="px-3 py-1.5 rounded-lg text-sm font-semibold transition-all disabled:opacity-50"
+              style={{ background: 'var(--orange)', color: 'white' }}
+            >
+              {savingLimit ? 'Sauvegarde…' : 'Mettre à jour'}
+            </button>
           </div>
         </div>
       )}
