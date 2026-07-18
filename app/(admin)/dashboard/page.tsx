@@ -33,7 +33,28 @@ export default async function DashboardPage({
     to   = range.to;
   }
 
-  const data = await getDashboardData(from.toISOString(), to.toISOString());
+  let data;
+  try {
+    data = await getDashboardData(from.toISOString(), to.toISOString());
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[dashboard] getDashboardData error:', msg);
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 p-6 text-center">
+        <p className="font-bold text-lg" style={{ color: 'var(--navy)' }}>
+          Erreur de chargement du tableau de bord
+        </p>
+        <p className="text-sm max-w-md" style={{ color: 'var(--gray-400)' }}>
+          {msg.includes('column') || msg.includes('relation') || msg.includes('table')
+            ? 'La base de données doit être mise à jour. Exécute npx prisma db push sur la base Neon puis redéploie.'
+            : msg}
+        </p>
+        <pre className="text-xs text-left bg-gray-50 rounded-xl p-4 max-w-lg overflow-auto" style={{ color: 'var(--gray-400)' }}>
+          {msg}
+        </pre>
+      </div>
+    );
+  }
 
   const firstName    = session.user.name?.split(' ')[0] ?? 'Admin';
   const todayRaw     = format(new Date(), "EEEE d MMMM yyyy", { locale: fr });
