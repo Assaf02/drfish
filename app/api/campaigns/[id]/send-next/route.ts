@@ -144,6 +144,13 @@ export async function POST(
     if (n && !seen.has(n)) { seen.add(n); phones.push(n); }
   }
 
+  if (campaign.totalTargets !== phones.length) {
+    await prisma.campaign.update({
+      where: { id: campaignId },
+      data:  { totalTargets: phones.length },
+    });
+  }
+
   const nextPhone = phones.find(p => !alreadyDone.has(p));
   if (!nextPhone) {
     const sent   = existingLogs.filter(l => l.status === 'SENT').length;
