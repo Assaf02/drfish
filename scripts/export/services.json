@@ -1,0 +1,32 @@
+[
+  {
+    "id": "cmozp0n1w000gli60sm6q3qdu",
+    "name": "Filetage",
+    "price": 500,
+    "promoPrice": 250,
+    "isPromo": false,
+    "active": true,
+    "createdAt": "2026-05-10T11:32:02.613Z",
+    "updatedAt": "2026-05-10T13:20:23.339Z"
+  },
+  {
+    "id": "cmozp0mu7000fli6065zk7uxt",
+    "name": "Découpage",
+    "price": 500,
+    "promoPrice": 0,
+    "isPromo": false,
+    "active": true,
+    "createdAt": "2026-05-10T11:32:02.336Z",
+    "updatedAt": "2026-07-11T08:52:35.412Z"
+  },
+  {
+    "id": "cmozp0mhf000eli60xrec8ngl",
+    "name": "Nettoyage",
+    "price": 500,
+    "promoPrice": 300,
+    "isPromo": true,
+    "active": true,
+    "createdAt": "2026-05-10T11:32:01.876Z",
+    "updatedAt": "2026-07-11T08:52:48.946Z"
+  }
+]

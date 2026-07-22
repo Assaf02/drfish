@@ -11,13 +11,14 @@ import { createClient, updateClient } from '@/app/actions/clients';
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
-type Client = { id: string; name: string; phone: string | null; address: string | null; notes: string | null; _count: { sales: number } };
+type Client = { id: string; name: string; phone: string | null; address: string | null; notes: string | null; birthDate: Date | string | null; _count: { sales: number } };
 
 const schema = z.object({
-  name: z.string().min(1, 'Nom requis'),
-  phone: z.string().optional().nullable(),
-  address: z.string().optional().nullable(),
-  notes: z.string().optional().nullable(),
+  name:      z.string().min(1, 'Nom requis'),
+  phone:     z.string().optional().nullable(),
+  address:   z.string().optional().nullable(),
+  notes:     z.string().optional().nullable(),
+  birthDate: z.string().optional().nullable(),
 });
 type FormData = z.infer<typeof schema>;
 
@@ -35,7 +36,12 @@ export function ClientsManager({ initialClients }: { initialClients: Client[] })
   ), [clients, search]);
 
   const openCreate = () => { reset({}); setEditing(null); setShowForm(true); };
-  const openEdit = (c: Client) => { reset(c); setEditing(c); setShowForm(true); };
+  const openEdit = (c: Client) => {
+    const bd = c.birthDate ? new Date(c.birthDate).toISOString().split('T')[0] : null;
+    reset({ ...c, birthDate: bd });
+    setEditing(c);
+    setShowForm(true);
+  };
 
   const onSubmit = async (data: FormData) => {
     setLoading(true);
@@ -124,6 +130,10 @@ export function ClientsManager({ initialClients }: { initialClients: Client[] })
             <div>
               <label className="label">Notes</label>
               <textarea {...register('notes')} className="input-field" rows={2} placeholder="Préférences, infos..." />
+            </div>
+            <div>
+              <label className="label">Date de naissance <span style={{ color: 'var(--gray-400)', fontWeight: 400 }}>(pour alertes anniversaire)</span></label>
+              <input {...register('birthDate')} type="date" className="input-field" />
             </div>
             <div className="flex gap-3 pt-2">
               <button type="button" onClick={() => setShowForm(false)} className="btn-secondary flex-1">Annuler</button>

@@ -7,10 +7,11 @@ import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 
 const clientSchema = z.object({
-  name: z.string().min(1, 'Nom requis'),
-  phone: z.string().optional().nullable(),
-  address: z.string().optional().nullable(),
-  notes: z.string().optional().nullable(),
+  name:      z.string().min(1, 'Nom requis'),
+  phone:     z.string().optional().nullable(),
+  address:   z.string().optional().nullable(),
+  notes:     z.string().optional().nullable(),
+  birthDate: z.string().optional().nullable(),
 });
 
 export async function getClients(search?: string) {
@@ -58,7 +59,10 @@ export async function createClient(data: z.infer<typeof clientSchema>) {
   if (!session) throw new Error('Unauthorized');
 
   const validated = clientSchema.parse(data);
-  const client = await prisma.client.create({ data: validated });
+  const { birthDate, ...rest } = validated;
+  const client = await prisma.client.create({
+    data: { ...rest, birthDate: birthDate ? new Date(birthDate) : null },
+  });
   revalidatePath('/clients');
   return { success: true, client };
 }
@@ -67,7 +71,11 @@ export async function updateClient(id: string, data: Partial<z.infer<typeof clie
   const session = await getServerSession(authOptions);
   if (!session) throw new Error('Unauthorized');
 
-  const client = await prisma.client.update({ where: { id }, data });
+  const { birthDate, ...rest } = data as Record<string, unknown> & { birthDate?: string | null };
+  const client = await prisma.client.update({
+    where: { id },
+    data: { ...rest, ...(birthDate !== undefined ? { birthDate: birthDate ? new Date(birthDate) : null } : {}) },
+  });
   revalidatePath('/clients');
   revalidatePath(`/clients/${id}`);
   return { success: true, client };

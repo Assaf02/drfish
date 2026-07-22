@@ -182,6 +182,9 @@ export async function POST(
 
   try {
     const jid = `${nextPhone}@s.whatsapp.net`;
+    // Use per-phone personalized message if available (alert campaigns)
+    const phoneMessages = campaign.phoneMessages as Record<string, string> | null;
+    const messageText   = phoneMessages?.[nextPhone] ?? campaign.message;
     if (campaign.mediaUrl) {
       const mediaRes = await fetch(campaign.mediaUrl, { signal: AbortSignal.timeout(Math.min(budgetLeft() - 1_500, 5_000)) });
       if (!mediaRes.ok) throw new Error(`Cannot fetch media: ${mediaRes.status}`);
@@ -189,14 +192,14 @@ export async function POST(
       const mime     = mediaRes.headers.get('content-type') ?? 'application/octet-stream';
       const fileName = new URL(campaign.mediaUrl).pathname.split('/').pop() ?? 'fichier';
       if (mime.startsWith('image/')) {
-        await sock.sendMessage(jid, { image: buffer, caption: addVariation(campaign.message || '') });
+        await sock.sendMessage(jid, { image: buffer, caption: addVariation(messageText || '') });
       } else if (mime.startsWith('video/')) {
-        await sock.sendMessage(jid, { video: buffer, caption: addVariation(campaign.message || '') });
+        await sock.sendMessage(jid, { video: buffer, caption: addVariation(messageText || '') });
       } else {
-        await sock.sendMessage(jid, { document: buffer, mimetype: mime, fileName, caption: addVariation(campaign.message || '') });
+        await sock.sendMessage(jid, { document: buffer, mimetype: mime, fileName, caption: addVariation(messageText || '') });
       }
     } else {
-      await sock.sendMessage(jid, { text: addVariation(campaign.message) });
+      await sock.sendMessage(jid, { text: addVariation(messageText) });
     }
     ok = true;
   } catch (err) {

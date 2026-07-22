@@ -1,0 +1,72 @@
+[
+  {
+    "id": "cmozp0n7i000hli60964pfu06",
+    "key": "business_name",
+    "value": "Dr Fish",
+    "createdAt": "2026-05-10T11:32:02.814Z",
+    "updatedAt": "2026-05-10T11:32:02.814Z"
+  },
+  {
+    "id": "cmozp0nf9000ili60abmhlz8d",
+    "key": "business_phone",
+    "value": "+229 97 00 00 00",
+    "createdAt": "2026-05-10T11:32:03.093Z",
+    "updatedAt": "2026-05-10T11:32:03.093Z"
+  },
+  {
+    "id": "cmozp0nn0000jli60d69z3rqs",
+    "key": "whatsapp_link",
+    "value": "https://wa.me/22997000000",
+    "createdAt": "2026-05-10T11:32:03.373Z",
+    "updatedAt": "2026-05-10T11:32:03.373Z"
+  },
+  {
+    "id": "cmozp0nsq000kli60kb0cn6ir",
+    "key": "business_address",
+    "value": "Cotonou, Bénin",
+    "createdAt": "2026-05-10T11:32:03.578Z",
+    "updatedAt": "2026-05-10T11:32:03.578Z"
+  },
+  {
+    "id": "cmozp0nwj000lli60mzwux6mj",
+    "key": "promo_active",
+    "value": "true",
+    "createdAt": "2026-05-10T11:32:03.716Z",
+    "updatedAt": "2026-05-10T11:32:03.716Z"
+  },
+  {
+    "id": "cmozp0o0p000mli60v9dob1wx",
+    "key": "agent_base_salary",
+    "value": "25000",
+    "createdAt": "2026-05-10T11:32:03.865Z",
+    "updatedAt": "2026-05-10T11:32:03.865Z"
+  },
+  {
+    "id": "cmozp0o4g000nli60kbbea18w",
+    "key": "bonus_tier1_orders",
+    "value": "10",
+    "createdAt": "2026-05-10T11:32:04.000Z",
+    "updatedAt": "2026-05-10T11:32:04.000Z"
+  },
+  {
+    "id": "cmozp0o80000oli60a9zi8cyf",
+    "key": "bonus_tier1_percent",
+    "value": "5",
+    "createdAt": "2026-05-10T11:32:04.128Z",
+    "updatedAt": "2026-05-10T11:32:04.128Z"
+  },
+  {
+    "id": "cmozp0oc8000pli60k577efin",
+    "key": "bonus_tier2_orders",
+    "value": "20",
+    "createdAt": "2026-05-10T11:32:04.280Z",
+    "updatedAt": "2026-05-10T11:32:04.280Z"
+  },
+  {
+    "id": "cmozp0ogr000qli609ikxm0lw",
+    "key": "bonus_tier2_percent",
+    "value": "10",
+    "createdAt": "2026-05-10T11:32:04.443Z",
+    "updatedAt": "2026-05-10T11:32:04.443Z"
+  }
+]

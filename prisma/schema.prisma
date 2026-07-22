@@ -57,13 +57,14 @@ model Service {
 }
 
 model Client {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   name      String
   phone     String?
   address   String?
   notes     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  birthDate DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   sales         Sale[]
   subscriptions Subscription[]
@@ -181,6 +182,7 @@ model Campaign {
   baseDelaySeconds Int           @default(12)
   source           String        @default("DB_CLIENTS")
   phones           String[]      @default([])
+  phoneMessages    Json?
   mediaUrl         String?
   scheduledAt      DateTime?
   dailyLimit       Int           @default(200)
@@ -204,6 +206,18 @@ model CampaignLog {
   sentAt     DateTime @default(now())
 
   @@map("campaign_logs")
+}
+
+model AlertRule {
+  id        String   @id @default(cuid())
+  type      String   @unique // PAYMENT_REMINDER | INACTIVE_CLIENT | BIRTHDAY
+  active    Boolean  @default(false)
+  delayDays Int      @default(7)
+  message   String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("alert_rules")
 }
 
 model WhatsAppSession {

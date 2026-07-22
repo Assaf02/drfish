@@ -1,0 +1,62 @@
+[
+  {
+    "id": "cmozp0he80000li60hvythr0q",
+    "email": "joresse@drfish.bj",
+    "name": "Joresse",
+    "password": "$2a$12$fjF6sXLEFQ/AzoRPcgOsAuJZeyxkT1mlfgS4uF83R0x04Sc2qwXEG",
+    "role": "ADMIN",
+    "active": true,
+    "createdAt": "2026-05-10T11:31:55.280Z",
+    "updatedAt": "2026-05-10T11:31:55.280Z"
+  },
+  {
+    "id": "cmozp0iah0001li60f5bfcp3j",
+    "email": "irene@drfish.bj",
+    "name": "Irène",
+    "password": "$2a$12$qX8Ckg.qR.Dfy6Gtd/ozVuAoyZNL9UahjhMf1ABlWks6qVeo75lme",
+    "role": "AGENT",
+    "active": true,
+    "createdAt": "2026-05-10T11:31:56.441Z",
+    "updatedAt": "2026-05-10T11:31:56.441Z"
+  },
+  {
+    "id": "cmozpfdtb0000rlkvtbrv8ik9",
+    "email": "ananouassaf+1@gmail.com",
+    "name": "Assaf ANANOU",
+    "password": "$2a$12$bdd3kDuSKLV3V0L7nulibuE4XDF99RlWbML2NTGoEcDmngW/HBdqW",
+    "role": "ADMIN",
+    "active": true,
+    "createdAt": "2026-05-10T11:43:30.477Z",
+    "updatedAt": "2026-05-10T11:43:30.477Z"
+  },
+  {
+    "id": "cmozpkeip0000oj1mgniyobx7",
+    "email": "colombe@drfish.com",
+    "name": "Colombe",
+    "password": "$2a$12$HCBYKtnXTY/0rm1pR5E5NOLUhTQiKC2Irz4dJ6gvNWzFDfGz8bwtK",
+    "role": "AGENT",
+    "active": true,
+    "createdAt": "2026-05-10T11:47:24.674Z",
+    "updatedAt": "2026-05-10T11:47:24.674Z"
+  },
+  {
+    "id": "cmozry8xj0000i79dae0otlxu",
+    "email": "marcel@drfish.com",
+    "name": "Marcel SOSSOU",
+    "password": "$2a$12$TSmzYGxbNM1/.H3b/JVy3eOdmIJeABPD3xA5AN2gAVMaIBjhXcke2",
+    "role": "ADMIN",
+    "active": true,
+    "createdAt": "2026-05-10T12:54:09.848Z",
+    "updatedAt": "2026-05-10T12:54:09.848Z"
+  },
+  {
+    "id": "cmpd9xx7z00007al6jalq53cd",
+    "email": "assaf@drfish.com",
+    "name": "Assaf ",
+    "password": "$2a$12$4SyjVGQN1y80Iw7as5tr7u5TvxoqpEpcMi5NLlRQY0n6v.bP0hhMO",
+    "role": "ADMIN",
+    "active": true,
+    "createdAt": "2026-05-19T23:38:47.474Z",
+    "updatedAt": "2026-05-19T23:38:47.474Z"
+  }
+]

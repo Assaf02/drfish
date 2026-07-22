@@ -1,0 +1,821 @@
+[
+  {
+    "id": "cmp83sz370004814ao0ay2l88",
+    "saleId": "cmp83sz370002814arrzcs01n",
+    "productId": "cmozp0jxj0005li603tri8nsv",
+    "quantity": 1,
+    "pricePerKg": 4000,
+    "subtotal": 4000,
+    "createdAt": "2026-05-16T08:48:08.611Z"
+  },
+  {
+    "id": "cmp83sz370005814a2sfrexjj",
+    "saleId": "cmp83sz370002814arrzcs01n",
+    "productId": "cmozp0kh60007li603870102l",
+    "quantity": 1,
+    "pricePerKg": 4000,
+    "subtotal": 4000,
+    "createdAt": "2026-05-16T08:48:08.611Z"
+  },
+  {
+    "id": "cmp8s6ajy0004c9dqrkewh2fy",
+    "saleId": "cmp8s6ajy0002c9dqt0f4aalj",
+    "productId": "cmozp0jxj0005li603tri8nsv",
+    "quantity": 1,
+    "pricePerKg": 4000,
+    "subtotal": 4000,
+    "createdAt": "2026-05-16T20:10:20.782Z"
+  },
+  {
+    "id": "cmp8s6ajy0005c9dqgkxqcq5z",
+    "saleId": "cmp8s6ajy0002c9dqt0f4aalj",
+    "productId": "cmozp0kh60007li603870102l",
+    "quantity": 1,
+    "pricePerKg": 4000,
+    "subtotal": 4000,
+    "createdAt": "2026-05-16T20:10:20.782Z"
+  },
+  {
+    "id": "cmp8s6ajy0006c9dqwjbv59vt",
+    "saleId": "cmp8s6ajy0002c9dqt0f4aalj",
+    "productId": "cmp884n6t0001lshysfdav7z8",
+    "quantity": 2,
+    "pricePerKg": 4000,
+    "subtotal": 8000,
+    "createdAt": "2026-05-16T20:10:20.782Z"
+  },
+  {
+    "id": "cmp8s6ajy0007c9dqdwg75csp",
+    "saleId": "cmp8s6ajy0002c9dqt0f4aalj",
+    "productId": "cmozp0kxa0009li60xohc0ysn",
+    "quantity": 1,
+    "pricePerKg": 2800,
+    "subtotal": 2800,
+    "createdAt": "2026-05-16T20:10:20.782Z"
+  },
+  {
+    "id": "cmp8s7wmm000cc9dq710q2fzj",
+    "saleId": "cmp8s7wmm000ac9dqh0p90yk3",
+    "productId": "cmozp0l76000ali609m7dlnih",
+    "quantity": 1,
+    "pricePerKg": 3500,
+    "subtotal": 3500,
+    "createdAt": "2026-05-16T20:11:36.046Z"
+  },
+  {
+    "id": "cmpaznvfe0004kl4dkn69ocez",
+    "saleId": "cmpaznvfe0002kl4damvzoum8",
+    "productId": "cmozp0jxj0005li603tri8nsv",
+    "quantity": 1,
+    "pricePerKg": 4000,
+    "subtotal": 4000,
+    "createdAt": "2026-05-18T09:15:30.650Z"
+  },
+  {
+    "id": "cmpazq05i000bkl4dmuqc3isf",
+    "saleId": "cmpazq05i0009kl4dc5kxreq7",
+    "productId": "cmozp0kxa0009li60xohc0ysn",
+    "quantity": 1,
+    "pricePerKg": 2800,
+    "subtotal": 2800,
+    "createdAt": "2026-05-18T09:17:10.086Z"
+  },
+  {
+    "id": "cmpb00q0b0004b8cilt9y5czv",
+    "saleId": "cmpb00q0b0002b8cigsfagc5a",
+    "productId": "cmozp0jxj0005li603tri8nsv",
+    "quantity": 1.5,
+    "pricePerKg": 4000,
+    "subtotal": 6000,
+    "createdAt": "2026-05-18T09:25:30.156Z"
+  },
+  {
+    "id": "cmpcrg2eb0004vhvx4xtj6fzb",
+    "saleId": "cmpcrg2eb0002vhvxwgefgzc4",
+    "productId": "cmozp0jxj0005li603tri8nsv",
+    "quantity": 1,
+    "pricePerKg": 4000,
+    "subtotal": 4000,
+    "createdAt": "2026-05-19T15:01:01.859Z"
+  },
+  {
+    "id": "cmpcriihf000bvhvxdck1devm",
+    "saleId": "cmpcriihf0009vhvx91ut1q2h",
+    "productId": "cmozp0jxj0005li603tri8nsv",
+    "quantity": 1.5,
+    "pricePerKg": 4000,
+    "subtotal": 6000,
+    "createdAt": "2026-05-19T15:02:56.019Z"
+  },
+  {
+    "id": "cmpcriihf000cvhvx4iee5ib0",
+    "saleId": "cmpcriihf0009vhvx91ut1q2h",
+    "productId": "cmozp0kp50008li605xkwqd5l",
+    "quantity": 0.5,
+    "pricePerKg": 4000,
+    "subtotal": 2000,
+    "createdAt": "2026-05-19T15:02:56.019Z"
+  },
+  {
+    "id": "cmpcrje4a000hvhvxvo4edn4t",
+    "saleId": "cmpcrje4a000fvhvxcc5bo3g2",
+    "productId": "cmozp0jxj0005li603tri8nsv",
+    "quantity": 2,
+    "pricePerKg": 4000,
+    "subtotal": 8000,
+    "createdAt": "2026-05-19T15:03:37.018Z"
+  },
+  {
+    "id": "cmpcrkqm3000mvhvxt73r1yqv",
+    "saleId": "cmpcrkqm3000kvhvxhkh2lrct",
+    "productId": "cmozp0kh60007li603870102l",
+    "quantity": 2,
+    "pricePerKg": 4000,
+    "subtotal": 8000,
+    "createdAt": "2026-05-19T15:04:39.867Z"
+  },
+  {
+    "id": "cmpd48qlm0004w94ppb7xxvka",
+    "saleId": "cmpd48qlm0002w94pnac2m4p0",
+    "productId": "cmozp0jxj0005li603tri8nsv",
+    "quantity": 1,
+    "pricePerKg": 4000,
+    "subtotal": 4000,
+    "createdAt": "2026-05-19T20:59:14.986Z"
+  },
+  {
+    "id": "cmpd48qlm0005w94pmnqxaaye",
+    "saleId": "cmpd48qlm0002w94pnac2m4p0",
+    "productId": "cmozp0kp50008li605xkwqd5l",
+    "quantity": 1,
+    "pricePerKg": 4000,
+    "subtotal": 4000,
+    "createdAt": "2026-05-19T20:59:14.986Z"
+  },
+  {
+    "id": "cmph313fv0004v6b6wdhi9bl8",
+    "saleId": "cmph313fv0002v6b6a4jta0ev",
+    "productId": "cmozp0kxa0009li60xohc0ysn",
+    "quantity": 3,
+    "pricePerKg": 2800,
+    "subtotal": 8400,
+    "createdAt": "2026-05-22T15:36:23.467Z"
+  },
+  {
+    "id": "cmpi11p4b0003hstfm43afgsx",
+    "saleId": "cmpi11p4a0001hstfzsimweas",
+    "productId": "cmozp0jxj0005li603tri8nsv",
+    "quantity": 1,
+    "pricePerKg": 4000,
+    "subtotal": 4000,
+    "createdAt": "2026-05-23T07:28:38.412Z"
+  },
+  {
+    "id": "cmpi11p4b0004hstfzirjxcz4",
+    "saleId": "cmpi11p4a0001hstfzsimweas",
+    "productId": "cmozp0kh60007li603870102l",
+    "quantity": 1,
+    "pricePerKg": 4000,
+    "subtotal": 4000,
+    "createdAt": "2026-05-23T07:28:38.412Z"
+  },
+  {
+    "id": "cmpi17znl0009hstf4fozufv7",
+    "saleId": "cmpi17znl0007hstfetpvzkz8",
+    "productId": "cmozp0jxj0005li603tri8nsv",
+    "quantity": 3,
+    "pricePerKg": 4000,
+    "subtotal": 12000,
+    "createdAt": "2026-05-23T07:33:32.098Z"
+  },
+  {
+    "id": "cmpi1c14x000ghstfp955xal1",
+    "saleId": "cmpi1c14x000ehstf3k9h432z",
+    "productId": "cmozp0jxj0005li603tri8nsv",
+    "quantity": 3,
+    "pricePerKg": 4000,
+    "subtotal": 12000,
+    "createdAt": "2026-05-23T07:36:40.642Z"
+  },
+  {
+    "id": "cmpi1c14y000hhstfjkuzlf01",
+    "saleId": "cmpi1c14x000ehstf3k9h432z",
+    "productId": "cmozp0kh60007li603870102l",
+    "quantity": 1,
+    "pricePerKg": 4000,
+    "subtotal": 4000,
+    "createdAt": "2026-05-23T07:36:40.642Z"
+  },
+  {
+    "id": "cmpi3vbrx0005rhlwtneunowz",
+    "saleId": "cmpi3vbrx0003rhlwix3whlxj",
+    "productId": "cmozp0kp50008li605xkwqd5l",
+    "quantity": 1.8,
+    "pricePerKg": 4000,
+    "subtotal": 7200,
+    "createdAt": "2026-05-23T08:47:40.125Z"
+  },
+  {
+    "id": "cmpi3vbrx0006rhlwfe3uxtxj",
+    "saleId": "cmpi3vbrx0003rhlwix3whlxj",
+    "productId": "cmozp0j2u0002li60x2v2kyef",
+    "quantity": 1,
+    "pricePerKg": 4500,
+    "subtotal": 4500,
+    "createdAt": "2026-05-23T08:47:40.125Z"
+  },
+  {
+    "id": "cmpmc7m8e0004gh1ch2nn30wc",
+    "saleId": "cmpmc7m8e0002gh1ctyjn72n5",
+    "productId": "cmozp0kh60007li603870102l",
+    "quantity": 4,
+    "pricePerKg": 4000,
+    "subtotal": 16000,
+    "createdAt": "2026-05-26T07:52:15.182Z"
+  },
+  {
+    "id": "cmpmcchye000bgh1c2kfo8300",
+    "saleId": "cmpmcchye0009gh1c8kj7kba7",
+    "productId": "cmozp0l76000ali609m7dlnih",
+    "quantity": 2,
+    "pricePerKg": 3500,
+    "subtotal": 7000,
+    "createdAt": "2026-05-26T07:56:02.918Z"
+  },
+  {
+    "id": "cmpmcchye000cgh1ct1308i6l",
+    "saleId": "cmpmcchye0009gh1c8kj7kba7",
+    "productId": "cmozp0lel000bli60047in87k",
+    "quantity": 1,
+    "pricePerKg": 3800,
+    "subtotal": 3800,
+    "createdAt": "2026-05-26T07:56:02.918Z"
+  },
+  {
+    "id": "cmpmceci7000jgh1cp3lm14zk",
+    "saleId": "cmpmceci7000hgh1c070dr4bm",
+    "productId": "cmp884n6t0001lshysfdav7z8",
+    "quantity": 2,
+    "pricePerKg": 4000,
+    "subtotal": 8000,
+    "createdAt": "2026-05-26T07:57:29.167Z"
+  },
+  {
+    "id": "cmpmceci7000kgh1ce948fmr9",
+    "saleId": "cmpmceci7000hgh1c070dr4bm",
+    "productId": "cmozp0lel000bli60047in87k",
+    "quantity": 1,
+    "pricePerKg": 3800,
+    "subtotal": 3800,
+    "createdAt": "2026-05-26T07:57:29.167Z"
+  },
+  {
+    "id": "cmpmcj03l000rgh1cs98qw03u",
+    "saleId": "cmpmcj03k000pgh1cklnhmnm2",
+    "productId": "cmozp0lm3000cli605j0ow1t6",
+    "quantity": 2,
+    "pricePerKg": 9000,
+    "subtotal": 18000,
+    "createdAt": "2026-05-26T08:01:06.369Z"
+  },
+  {
+    "id": "cmpmckkkw000xgh1crj2vjusi",
+    "saleId": "cmpmckkkw000vgh1ccd9645dt",
+    "productId": "cmozp0jxj0005li603tri8nsv",
+    "quantity": 1.5,
+    "pricePerKg": 4000,
+    "subtotal": 6000,
+    "createdAt": "2026-05-26T08:02:19.476Z"
+  },
+  {
+    "id": "cmpmtht440003sm0p3nfn8ofq",
+    "saleId": "cmpmtht440001sm0p8xr9gzne",
+    "productId": "cmozp0jxj0005li603tri8nsv",
+    "quantity": 1,
+    "pricePerKg": 4000,
+    "subtotal": 4000,
+    "createdAt": "2026-05-26T15:56:04.039Z"
+  },
+  {
+    "id": "cmpmtld730004uoek1cpnyxkh",
+    "saleId": "cmpmtld730002uoekjnryxotp",
+    "productId": "cmozp0jxj0005li603tri8nsv",
+    "quantity": 5,
+    "pricePerKg": 4000,
+    "subtotal": 20000,
+    "createdAt": "2026-05-26T15:58:50.127Z"
+  },
+  {
+    "id": "cmpmv3czw0003j0mjfek4sjsi",
+    "saleId": "cmpmv3czw0001j0mjnag8xqrf",
+    "productId": "cmpmuf0ah0000cp8l8r88p80v",
+    "quantity": 2,
+    "pricePerKg": 2800,
+    "subtotal": 5600,
+    "createdAt": "2026-05-26T16:40:49.289Z"
+  },
+  {
+    "id": "cmpmv5cdu000bj0mjnebqd5ys",
+    "saleId": "cmpmv5cdu0009j0mjbvir6lxw",
+    "productId": "cmozp0lel000bli60047in87k",
+    "quantity": 2,
+    "pricePerKg": 3800,
+    "subtotal": 7600,
+    "createdAt": "2026-05-26T16:42:21.810Z"
+  },
+  {
+    "id": "cmpmv6i8r000gj0mjrnzhw4t2",
+    "saleId": "cmpmv6i8r000ej0mjhukobri4",
+    "productId": "cmozp0kh60007li603870102l",
+    "quantity": 2,
+    "pricePerKg": 4000,
+    "subtotal": 8000,
+    "createdAt": "2026-05-26T16:43:16.059Z"
+  },
+  {
+    "id": "cmpok0v390003yx76rcb9jcz8",
+    "saleId": "cmpok0v390001yx76ahdyarjq",
+    "productId": "cmozp0lel000bli60047in87k",
+    "quantity": 2,
+    "pricePerKg": 3800,
+    "subtotal": 7600,
+    "createdAt": "2026-05-27T21:06:29.257Z"
+  },
+  {
+    "id": "cmpok0v390004yx76tunrvyjn",
+    "saleId": "cmpok0v390001yx76ahdyarjq",
+    "productId": "cmozp0jxj0005li603tri8nsv",
+    "quantity": 1,
+    "pricePerKg": 4000,
+    "subtotal": 4000,
+    "createdAt": "2026-05-27T21:06:29.257Z"
+  },
+  {
+    "id": "cmppu8x740004puoq4y7akyec",
+    "saleId": "cmppu8x740002puoqojakx7px",
+    "productId": "cmozp0jxj0005li603tri8nsv",
+    "quantity": 1,
+    "pricePerKg": 4000,
+    "subtotal": 4000,
+    "createdAt": "2026-05-28T18:40:27.664Z"
+  },
+  {
+    "id": "cmppu8x740005puoqqq2xrumn",
+    "saleId": "cmppu8x740002puoqojakx7px",
+    "productId": "cmp884n6t0001lshysfdav7z8",
+    "quantity": 1,
+    "pricePerKg": 4000,
+    "subtotal": 4000,
+    "createdAt": "2026-05-28T18:40:27.664Z"
+  },
+  {
+    "id": "cmppucsc5000bpuoqq90q824x",
+    "saleId": "cmppucsc50009puoqd1hz6yu4",
+    "productId": "cmozp0jxj0005li603tri8nsv",
+    "quantity": 2,
+    "pricePerKg": 4000,
+    "subtotal": 8000,
+    "createdAt": "2026-05-28T18:43:27.896Z"
+  },
+  {
+    "id": "cmppucsc5000cpuoq30kj60hu",
+    "saleId": "cmppucsc50009puoqd1hz6yu4",
+    "productId": "cmozp0kh60007li603870102l",
+    "quantity": 1,
+    "pricePerKg": 4000,
+    "subtotal": 4000,
+    "createdAt": "2026-05-28T18:43:27.896Z"
+  },
+  {
+    "id": "cmppufgb1000hpuoq9qgb8ta4",
+    "saleId": "cmppufgb1000fpuoqedx22n8p",
+    "productId": "cmozp0kh60007li603870102l",
+    "quantity": 3,
+    "pricePerKg": 4000,
+    "subtotal": 12000,
+    "createdAt": "2026-05-28T18:45:32.366Z"
+  },
+  {
+    "id": "cmpszz8os0004cedblcnlqyn4",
+    "saleId": "cmpszz8or0002cedbzw1td4rp",
+    "productId": "cmozp0kp50008li605xkwqd5l",
+    "quantity": 1.2,
+    "pricePerKg": 4000,
+    "subtotal": 4800,
+    "createdAt": "2026-05-30T23:44:12.220Z"
+  },
+  {
+    "id": "cmpszzbjr000ccedb5k1xec1j",
+    "saleId": "cmpszzbjr000acedbbjjmyjcx",
+    "productId": "cmozp0jxj0005li603tri8nsv",
+    "quantity": 1,
+    "pricePerKg": 4000,
+    "subtotal": 4000,
+    "createdAt": "2026-05-30T23:44:15.928Z"
+  },
+  {
+    "id": "cmpt03wpr0004a4e6al3mxd73",
+    "saleId": "cmpt03wpr0002a4e61n8w8612",
+    "productId": "cmozp0kp50008li605xkwqd5l",
+    "quantity": 2,
+    "pricePerKg": 4000,
+    "subtotal": 8000,
+    "createdAt": "2026-05-30T23:47:49.984Z"
+  },
+  {
+    "id": "cmpt03yrm000ca4e6qhsk2bbr",
+    "saleId": "cmpt03yrm000aa4e61mli1re6",
+    "productId": "cmozp0jxj0005li603tri8nsv",
+    "quantity": 1,
+    "pricePerKg": 4000,
+    "subtotal": 4000,
+    "createdAt": "2026-05-30T23:47:52.643Z"
+  },
+  {
+    "id": "cmpwd7m670004f1ij89lznofx",
+    "saleId": "cmpwd7m670002f1ijnu1shie4",
+    "productId": "cmozp0jxj0005li603tri8nsv",
+    "quantity": 1,
+    "pricePerKg": 4000,
+    "subtotal": 4000,
+    "createdAt": "2026-06-02T08:17:56.479Z"
+  },
+  {
+    "id": "cmpwdadxt000bf1ijhlxnvhe5",
+    "saleId": "cmpwdadxt0009f1ijfvs4owpj",
+    "productId": "cmozp0kp50008li605xkwqd5l",
+    "quantity": 0.8,
+    "pricePerKg": 4000,
+    "subtotal": 3200,
+    "createdAt": "2026-06-02T08:20:05.777Z"
+  },
+  {
+    "id": "cmpx6oid10003vq5joa6wiiax",
+    "saleId": "cmpx6oid00001vq5jm8h0hx4a",
+    "productId": "cmpi3sq0s0000rhlw0ol8yw68",
+    "quantity": 2,
+    "pricePerKg": 4000,
+    "subtotal": 8000,
+    "createdAt": "2026-06-02T22:02:53.464Z"
+  },
+  {
+    "id": "cmpx6oid10004vq5jw3sa2xzb",
+    "saleId": "cmpx6oid00001vq5jm8h0hx4a",
+    "productId": "cmozp0kp50008li605xkwqd5l",
+    "quantity": 1.4,
+    "pricePerKg": 4000,
+    "subtotal": 5600,
+    "createdAt": "2026-06-02T22:02:53.464Z"
+  },
+  {
+    "id": "cmpx6qzc2000cvq5jp30186pt",
+    "saleId": "cmpx6qzc2000avq5j84vejq75",
+    "productId": "cmozp0jxj0005li603tri8nsv",
+    "quantity": 2,
+    "pricePerKg": 4000,
+    "subtotal": 8000,
+    "createdAt": "2026-06-02T22:04:48.866Z"
+  },
+  {
+    "id": "cmpx6qzc2000dvq5jua2hywbx",
+    "saleId": "cmpx6qzc2000avq5j84vejq75",
+    "productId": "cmozp0kp50008li605xkwqd5l",
+    "quantity": 2,
+    "pricePerKg": 4000,
+    "subtotal": 8000,
+    "createdAt": "2026-06-02T22:04:48.866Z"
+  },
+  {
+    "id": "cmq2iycdo0004jyheugqt3nj5",
+    "saleId": "cmq2iycdo0002jyhegyozxxwu",
+    "productId": "cmozp0lel000bli60047in87k",
+    "quantity": 2,
+    "pricePerKg": 3800,
+    "subtotal": 7600,
+    "createdAt": "2026-06-06T15:45:18.637Z"
+  },
+  {
+    "id": "cmq5na20b0003brkeotlimarj",
+    "saleId": "cmq5na20b0001brkej96242el",
+    "productId": "cmozp0jxj0005li603tri8nsv",
+    "quantity": 2,
+    "pricePerKg": 4000,
+    "subtotal": 8000,
+    "createdAt": "2026-06-08T20:09:42.057Z"
+  },
+  {
+    "id": "cmq5nbp100009brkeq6gadnas",
+    "saleId": "cmq5nbp100007brkeadcoljvj",
+    "productId": "cmozp0jxj0005li603tri8nsv",
+    "quantity": 1,
+    "pricePerKg": 4000,
+    "subtotal": 4000,
+    "createdAt": "2026-06-08T20:10:58.456Z"
+  },
+  {
+    "id": "cmq5nbp10000abrke1k9dqyyk",
+    "saleId": "cmq5nbp100007brkeadcoljvj",
+    "productId": "cmozp0kh60007li603870102l",
+    "quantity": 1,
+    "pricePerKg": 4000,
+    "subtotal": 4000,
+    "createdAt": "2026-06-08T20:10:58.456Z"
+  },
+  {
+    "id": "cmqla5h01000414gwwg7kzml6",
+    "saleId": "cmqla5h01000214gw3prbcrkc",
+    "productId": "cmozp0kh60007li603870102l",
+    "quantity": 1,
+    "pricePerKg": 4000,
+    "subtotal": 4000,
+    "createdAt": "2026-06-19T18:46:32.017Z"
+  },
+  {
+    "id": "cmqla5j18000b14gwahjv53tl",
+    "saleId": "cmqla5j18000914gw6n1xu5ya",
+    "productId": "cmozp0kxa0009li60xohc0ysn",
+    "quantity": 1,
+    "pricePerKg": 2800,
+    "subtotal": 2800,
+    "createdAt": "2026-06-19T18:46:34.652Z"
+  },
+  {
+    "id": "cmqla7qmg000g14gw5afh8ltd",
+    "saleId": "cmqla7qmg000e14gwdnyuvx6f",
+    "productId": "cmozp0kxa0009li60xohc0ysn",
+    "quantity": 2,
+    "pricePerKg": 2800,
+    "subtotal": 5600,
+    "createdAt": "2026-06-19T18:48:17.800Z"
+  },
+  {
+    "id": "cmqmqpp0j0003wy3xm1b3762e",
+    "saleId": "cmqmqpp0j0001wy3xjgovhjgn",
+    "productId": "cmpi3sq0s0000rhlw0ol8yw68",
+    "quantity": 1.4,
+    "pricePerKg": 4000,
+    "subtotal": 5600,
+    "createdAt": "2026-06-20T19:17:55.552Z"
+  },
+  {
+    "id": "cmqmqpqyo000awy3xeiecy0pu",
+    "saleId": "cmqmqpqyo0008wy3xltg0li7t",
+    "productId": "cmpi3sq0s0000rhlw0ol8yw68",
+    "quantity": 2,
+    "pricePerKg": 4000,
+    "subtotal": 8000,
+    "createdAt": "2026-06-20T19:17:58.081Z"
+  },
+  {
+    "id": "cmqmqpqyo000bwy3x6pglypzv",
+    "saleId": "cmqmqpqyo0008wy3xltg0li7t",
+    "productId": "cmozp0kh60007li603870102l",
+    "quantity": 2,
+    "pricePerKg": 4000,
+    "subtotal": 8000,
+    "createdAt": "2026-06-20T19:17:58.081Z"
+  },
+  {
+    "id": "cmqmqpsgy000iwy3xgsdm2tim",
+    "saleId": "cmqmqpsgy000gwy3xduunvgji",
+    "productId": "cmozp0l76000ali609m7dlnih",
+    "quantity": 1,
+    "pricePerKg": 3500,
+    "subtotal": 3500,
+    "createdAt": "2026-06-20T19:18:00.034Z"
+  },
+  {
+    "id": "cmqmqpsgy000jwy3xq9jkjdo0",
+    "saleId": "cmqmqpsgy000gwy3xduunvgji",
+    "productId": "cmp884n6t0001lshysfdav7z8",
+    "quantity": 1,
+    "pricePerKg": 4000,
+    "subtotal": 4000,
+    "createdAt": "2026-06-20T19:18:00.034Z"
+  },
+  {
+    "id": "cmqodh3kh0003m38x1agtorlv",
+    "saleId": "cmqodh3kh0001m38xsck4gkb4",
+    "productId": "cmozp0jxj0005li603tri8nsv",
+    "quantity": 1,
+    "pricePerKg": 4000,
+    "subtotal": 4000,
+    "createdAt": "2026-06-21T22:42:51.764Z"
+  },
+  {
+    "id": "cmqodh5pj000am38xdv9xhnpb",
+    "saleId": "cmqodh5pj0008m38xkybnxxvy",
+    "productId": "cmozp0j2u0002li60x2v2kyef",
+    "quantity": 2,
+    "pricePerKg": 4500,
+    "subtotal": 9000,
+    "createdAt": "2026-06-21T22:42:54.631Z"
+  },
+  {
+    "id": "cmqppwkwv0004fz8uwz84vfws",
+    "saleId": "cmqppwkwv0002fz8u8t0zniyl",
+    "productId": "cmozp0kh60007li603870102l",
+    "quantity": 2,
+    "pricePerKg": 4000,
+    "subtotal": 8000,
+    "createdAt": "2026-06-22T21:18:35.743Z"
+  },
+  {
+    "id": "cmqsm5ws4000411z3yd1wa90n",
+    "saleId": "cmqsm5ws4000211z3mx6yhava",
+    "productId": "cmozp0jxj0005li603tri8nsv",
+    "quantity": 2,
+    "pricePerKg": 4000,
+    "subtotal": 8000,
+    "createdAt": "2026-06-24T21:57:11.092Z"
+  },
+  {
+    "id": "cmqsm5yvl000b11z359wsv08s",
+    "saleId": "cmqsm5yvl000911z387s1gsle",
+    "productId": "cmozp0kxa0009li60xohc0ysn",
+    "quantity": 2,
+    "pricePerKg": 2800,
+    "subtotal": 5600,
+    "createdAt": "2026-06-24T21:57:13.810Z"
+  },
+  {
+    "id": "cmqxhme0a000411cztyztikv5",
+    "saleId": "cmqxhme0a000211czq32cemmc",
+    "productId": "cmozp0k7c0006li60tcvzilx1",
+    "quantity": 2,
+    "pricePerKg": 3000,
+    "subtotal": 6000,
+    "createdAt": "2026-06-28T07:48:52.715Z"
+  },
+  {
+    "id": "cmqy0qz3b00049nbbftto9try",
+    "saleId": "cmqy0qz3b00029nbb7d7auz2a",
+    "productId": "cmozp0kxa0009li60xohc0ysn",
+    "quantity": 1,
+    "pricePerKg": 2300,
+    "subtotal": 2300,
+    "createdAt": "2026-06-28T16:44:19.367Z"
+  },
+  {
+    "id": "cmqy0r14g000b9nbbcww9yn9r",
+    "saleId": "cmqy0r14g00099nbb69q6c277",
+    "productId": "cmozp0kxa0009li60xohc0ysn",
+    "quantity": 1,
+    "pricePerKg": 2300,
+    "subtotal": 2300,
+    "createdAt": "2026-06-28T16:44:22.001Z"
+  },
+  {
+    "id": "cmqy0r251000f9nbbuhigdwmd",
+    "saleId": "cmqy0r251000d9nbbwln6tri2",
+    "productId": "cmozp0kxa0009li60xohc0ysn",
+    "quantity": 1.5,
+    "pricePerKg": 2300,
+    "subtotal": 3450,
+    "createdAt": "2026-06-28T16:44:23.318Z"
+  },
+  {
+    "id": "cmqy0r3do000m9nbbkll1jis9",
+    "saleId": "cmqy0r3do000k9nbbo1yz3k13",
+    "productId": "cmozp0kxa0009li60xohc0ysn",
+    "quantity": 1.6,
+    "pricePerKg": 2300,
+    "subtotal": 3680,
+    "createdAt": "2026-06-28T16:44:24.924Z"
+  },
+  {
+    "id": "cmqy0r3do000n9nbbbci6tk1m",
+    "saleId": "cmqy0r3do000k9nbbo1yz3k13",
+    "productId": "cmozp0lel000bli60047in87k",
+    "quantity": 2,
+    "pricePerKg": 3800,
+    "subtotal": 7600,
+    "createdAt": "2026-06-28T16:44:24.924Z"
+  },
+  {
+    "id": "cmr0d0qtl0004u9x82i0qjrxi",
+    "saleId": "cmr0d0qtk0002u9x8qdy88o05",
+    "productId": "cmozp0kh60007li603870102l",
+    "quantity": 4,
+    "pricePerKg": 4000,
+    "subtotal": 16000,
+    "createdAt": "2026-06-30T08:03:22.953Z"
+  },
+  {
+    "id": "cmrhyxu720004trfb7tzvp9s4",
+    "saleId": "cmrhyxu720002trfb5bgo0yw5",
+    "productId": "cmpi3sq0s0000rhlw0ol8yw68",
+    "quantity": 1,
+    "pricePerKg": 4000,
+    "subtotal": 4000,
+    "createdAt": "2026-07-12T15:49:03.902Z"
+  },
+  {
+    "id": "cmrhyxu720005trfbwf9eqvpj",
+    "saleId": "cmrhyxu720002trfb5bgo0yw5",
+    "productId": "cmrhlprh60000i88unrzofzb1",
+    "quantity": 1,
+    "pricePerKg": 3500,
+    "subtotal": 3500,
+    "createdAt": "2026-07-12T15:49:03.902Z"
+  },
+  {
+    "id": "cmrhyxwal000ctrfbcqcf6p82",
+    "saleId": "cmrhyxwal000atrfbiruzghbt",
+    "productId": "cmozp0j2u0002li60x2v2kyef",
+    "quantity": 2,
+    "pricePerKg": 4800,
+    "subtotal": 9600,
+    "createdAt": "2026-07-12T15:49:06.622Z"
+  },
+  {
+    "id": "cmrhyxxsw000jtrfbletc5sc3",
+    "saleId": "cmrhyxxsw000htrfb4woa48zw",
+    "productId": "cmozp0l76000ali609m7dlnih",
+    "quantity": 2,
+    "pricePerKg": 3500,
+    "subtotal": 7000,
+    "createdAt": "2026-07-12T15:49:08.576Z"
+  },
+  {
+    "id": "cmrhyxz2m000ptrfb3zviv1hg",
+    "saleId": "cmrhyxz2m000ntrfbbe6rnb39",
+    "productId": "cmozp0lel000bli60047in87k",
+    "quantity": 1.5,
+    "pricePerKg": 3800,
+    "subtotal": 5700,
+    "createdAt": "2026-07-12T15:49:10.222Z"
+  },
+  {
+    "id": "cmrhyy0do000wtrfblfn0h8vz",
+    "saleId": "cmrhyy0do000utrfbrtufz5fh",
+    "productId": "cmozp0j2u0002li60x2v2kyef",
+    "quantity": 2,
+    "pricePerKg": 4800,
+    "subtotal": 9600,
+    "createdAt": "2026-07-12T15:49:11.916Z"
+  },
+  {
+    "id": "cmrhzfxyu0003omb389pomc7u",
+    "saleId": "cmrhzfxyu0001omb39yl1bo90",
+    "productId": "cmrhyzxr50000p3uu4ttlp134",
+    "quantity": 2,
+    "pricePerKg": 3500,
+    "subtotal": 7000,
+    "createdAt": "2026-07-12T16:03:08.506Z"
+  },
+  {
+    "id": "cmrhzfxyu0004omb38o0qx91r",
+    "saleId": "cmrhzfxyu0001omb39yl1bo90",
+    "productId": "cmp884n6t0001lshysfdav7z8",
+    "quantity": 2,
+    "pricePerKg": 4000,
+    "subtotal": 8000,
+    "createdAt": "2026-07-12T16:03:08.506Z"
+  },
+  {
+    "id": "cmri358kl0003oqa7uz0tgby5",
+    "saleId": "cmri358kl0001oqa7kqi7utfm",
+    "productId": "cmpi3sq0s0000rhlw0ol8yw68",
+    "quantity": 1,
+    "pricePerKg": 4000,
+    "subtotal": 4000,
+    "createdAt": "2026-07-12T17:46:47.497Z"
+  },
+  {
+    "id": "cmrqhlp7s0004zwfedayxejkg",
+    "saleId": "cmrqhlp7s0002zwfeoutngzfm",
+    "productId": "cmozp0l76000ali609m7dlnih",
+    "quantity": 1.5,
+    "pricePerKg": 3000,
+    "subtotal": 4500,
+    "createdAt": "2026-07-18T14:53:39.688Z"
+  },
+  {
+    "id": "cmrqhlr52000azwfeewatsazs",
+    "saleId": "cmrqhlr520008zwfen0k0l8mm",
+    "productId": "cmozp0l76000ali609m7dlnih",
+    "quantity": 1,
+    "pricePerKg": 3000,
+    "subtotal": 3000,
+    "createdAt": "2026-07-18T14:53:42.182Z"
+  },
+  {
+    "id": "cmrqhlsec000gzwfe7ubw5m0t",
+    "saleId": "cmrqhlsec000ezwfee7lbl6s9",
+    "productId": "cmozp0l76000ali609m7dlnih",
+    "quantity": 2,
+    "pricePerKg": 3000,
+    "subtotal": 6000,
+    "createdAt": "2026-07-18T14:53:43.813Z"
+  },
+  {
+    "id": "cmrqhltjm000lzwfe4rorwyzu",
+    "saleId": "cmrqhltjm000jzwfeudqewaiw",
+    "productId": "cmozp0l76000ali609m7dlnih",
+    "quantity": 2,
+    "pricePerKg": 3000,
+    "subtotal": 6000,
+    "createdAt": "2026-07-18T14:53:45.299Z"
+  }
+]

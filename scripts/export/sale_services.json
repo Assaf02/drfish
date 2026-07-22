@@ -1,0 +1,415 @@
+[
+  {
+    "id": "cmp8s7wmm000ec9dq7jqfdm42",
+    "saleId": "cmp8s7wmm000ac9dqh0p90yk3",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 500,
+    "createdAt": "2026-05-16T20:11:36.046Z"
+  },
+  {
+    "id": "cmpaznvfe0006kl4decbhxbkh",
+    "saleId": "cmpaznvfe0002kl4damvzoum8",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 500,
+    "createdAt": "2026-05-18T09:15:30.650Z"
+  },
+  {
+    "id": "cmpazq05i000dkl4dlu6fgat9",
+    "saleId": "cmpazq05i0009kl4dc5kxreq7",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 500,
+    "createdAt": "2026-05-18T09:17:10.086Z"
+  },
+  {
+    "id": "cmpb00q0c0006b8ci5w8vqmwz",
+    "saleId": "cmpb00q0b0002b8cigsfagc5a",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 500,
+    "createdAt": "2026-05-18T09:25:30.156Z"
+  },
+  {
+    "id": "cmpcrg2eb0006vhvxj7oby58b",
+    "saleId": "cmpcrg2eb0002vhvxwgefgzc4",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 500,
+    "createdAt": "2026-05-19T15:01:01.859Z"
+  },
+  {
+    "id": "cmph313fv0006v6b6foylc5c5",
+    "saleId": "cmph313fv0002v6b6a4jta0ev",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 1500,
+    "createdAt": "2026-05-22T15:36:23.467Z"
+  },
+  {
+    "id": "cmpi17znl000bhstfae3k702v",
+    "saleId": "cmpi17znl0007hstfetpvzkz8",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 1500,
+    "createdAt": "2026-05-23T07:33:32.098Z"
+  },
+  {
+    "id": "cmpi1c14y000jhstfjb58bjwr",
+    "saleId": "cmpi1c14x000ehstf3k9h432z",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 2000,
+    "createdAt": "2026-05-23T07:36:40.642Z"
+  },
+  {
+    "id": "cmpi3vbrx0008rhlw9an5hit3",
+    "saleId": "cmpi3vbrx0003rhlwix3whlxj",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 1400,
+    "createdAt": "2026-05-23T08:47:40.125Z"
+  },
+  {
+    "id": "cmpmc7m8e0006gh1ck61u2hue",
+    "saleId": "cmpmc7m8e0002gh1ctyjn72n5",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 2000,
+    "createdAt": "2026-05-26T07:52:15.182Z"
+  },
+  {
+    "id": "cmpmcchye000egh1cyfbasobu",
+    "saleId": "cmpmcchye0009gh1c8kj7kba7",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 1500,
+    "createdAt": "2026-05-26T07:56:02.918Z"
+  },
+  {
+    "id": "cmpmceci7000mgh1c8ch4qzoz",
+    "saleId": "cmpmceci7000hgh1c070dr4bm",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 1500,
+    "createdAt": "2026-05-26T07:57:29.167Z"
+  },
+  {
+    "id": "cmpmcj03l000tgh1ccagr51lt",
+    "saleId": "cmpmcj03k000pgh1cklnhmnm2",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 1000,
+    "createdAt": "2026-05-26T08:01:06.369Z"
+  },
+  {
+    "id": "cmpmckkkw000zgh1cx4vb16c9",
+    "saleId": "cmpmckkkw000vgh1ccd9645dt",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 750,
+    "createdAt": "2026-05-26T08:02:19.476Z"
+  },
+  {
+    "id": "cmpmtht440005sm0ph5fxvrw6",
+    "saleId": "cmpmtht440001sm0p8xr9gzne",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 500,
+    "createdAt": "2026-05-26T15:56:04.039Z"
+  },
+  {
+    "id": "cmpmv3czw0005j0mjkqfnkc4t",
+    "saleId": "cmpmv3czw0001j0mjnag8xqrf",
+    "serviceId": "cmozp0n1w000gli60sm6q3qdu",
+    "price": 1000,
+    "createdAt": "2026-05-26T16:40:49.289Z"
+  },
+  {
+    "id": "cmpmv3czw0006j0mj9e5m9wif",
+    "saleId": "cmpmv3czw0001j0mjnag8xqrf",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 1000,
+    "createdAt": "2026-05-26T16:40:49.289Z"
+  },
+  {
+    "id": "cmpmv6i8r000ij0mj7dif6o79",
+    "saleId": "cmpmv6i8r000ej0mjhukobri4",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 1000,
+    "createdAt": "2026-05-26T16:43:16.059Z"
+  },
+  {
+    "id": "cmpok0v3a0006yx76znbq16ys",
+    "saleId": "cmpok0v390001yx76ahdyarjq",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 1500,
+    "createdAt": "2026-05-27T21:06:29.257Z"
+  },
+  {
+    "id": "cmppu8x740007puoqpy8d5maw",
+    "saleId": "cmppu8x740002puoqojakx7px",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 1000,
+    "createdAt": "2026-05-28T18:40:27.664Z"
+  },
+  {
+    "id": "cmppufgb1000jpuoqb8nl7cia",
+    "saleId": "cmppufgb1000fpuoqedx22n8p",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 1500,
+    "createdAt": "2026-05-28T18:45:32.366Z"
+  },
+  {
+    "id": "cmpszz8os0006cedbov1nj5ih",
+    "saleId": "cmpszz8or0002cedbzw1td4rp",
+    "serviceId": "cmozp0n1w000gli60sm6q3qdu",
+    "price": 600,
+    "createdAt": "2026-05-30T23:44:12.220Z"
+  },
+  {
+    "id": "cmpszz8os0007cedb68fxlsjn",
+    "saleId": "cmpszz8or0002cedbzw1td4rp",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 600,
+    "createdAt": "2026-05-30T23:44:12.220Z"
+  },
+  {
+    "id": "cmpszzbjs000ecedbfrawy1r7",
+    "saleId": "cmpszzbjr000acedbbjjmyjcx",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 500,
+    "createdAt": "2026-05-30T23:44:15.928Z"
+  },
+  {
+    "id": "cmpt03wps0006a4e667b7erjv",
+    "saleId": "cmpt03wpr0002a4e61n8w8612",
+    "serviceId": "cmozp0mu7000fli6065zk7uxt",
+    "price": 0,
+    "createdAt": "2026-05-30T23:47:49.984Z"
+  },
+  {
+    "id": "cmpt03wps0007a4e6tfnsclav",
+    "saleId": "cmpt03wpr0002a4e61n8w8612",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 1000,
+    "createdAt": "2026-05-30T23:47:49.984Z"
+  },
+  {
+    "id": "cmpt03yrm000ea4e6n90hm4yw",
+    "saleId": "cmpt03yrm000aa4e61mli1re6",
+    "serviceId": "cmozp0n1w000gli60sm6q3qdu",
+    "price": 500,
+    "createdAt": "2026-05-30T23:47:52.643Z"
+  },
+  {
+    "id": "cmpt03yrm000fa4e6eigrrlmq",
+    "saleId": "cmpt03yrm000aa4e61mli1re6",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 500,
+    "createdAt": "2026-05-30T23:47:52.643Z"
+  },
+  {
+    "id": "cmpwd7m670006f1ijsefrg85r",
+    "saleId": "cmpwd7m670002f1ijnu1shie4",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 500,
+    "createdAt": "2026-06-02T08:17:56.479Z"
+  },
+  {
+    "id": "cmpwdadxt000df1ijcxpkstzv",
+    "saleId": "cmpwdadxt0009f1ijfvs4owpj",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 400,
+    "createdAt": "2026-06-02T08:20:05.777Z"
+  },
+  {
+    "id": "cmpx6oid10006vq5j0c5jfelz",
+    "saleId": "cmpx6oid00001vq5jm8h0hx4a",
+    "serviceId": "cmozp0n1w000gli60sm6q3qdu",
+    "price": 1700,
+    "createdAt": "2026-06-02T22:02:53.464Z"
+  },
+  {
+    "id": "cmpx6oid10007vq5jxfe9i9pa",
+    "saleId": "cmpx6oid00001vq5jm8h0hx4a",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 1700,
+    "createdAt": "2026-06-02T22:02:53.464Z"
+  },
+  {
+    "id": "cmpx6qzc2000fvq5jdq9rbg05",
+    "saleId": "cmpx6qzc2000avq5j84vejq75",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 2000,
+    "createdAt": "2026-06-02T22:04:48.866Z"
+  },
+  {
+    "id": "cmq5na20b0005brke9i1yrruw",
+    "saleId": "cmq5na20b0001brkej96242el",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 1000,
+    "createdAt": "2026-06-08T20:09:42.057Z"
+  },
+  {
+    "id": "cmq5nbp10000cbrke4g7a9sn5",
+    "saleId": "cmq5nbp100007brkeadcoljvj",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 1000,
+    "createdAt": "2026-06-08T20:10:58.456Z"
+  },
+  {
+    "id": "cmqla5h01000614gwe2zt4ok5",
+    "saleId": "cmqla5h01000214gw3prbcrkc",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 500,
+    "createdAt": "2026-06-19T18:46:32.017Z"
+  },
+  {
+    "id": "cmqla7qmg000i14gw3quocgon",
+    "saleId": "cmqla7qmg000e14gwdnyuvx6f",
+    "serviceId": "cmozp0mu7000fli6065zk7uxt",
+    "price": 0,
+    "createdAt": "2026-06-19T18:48:17.800Z"
+  },
+  {
+    "id": "cmqla7qmg000j14gwz1p0x3ta",
+    "saleId": "cmqla7qmg000e14gwdnyuvx6f",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 1000,
+    "createdAt": "2026-06-19T18:48:17.800Z"
+  },
+  {
+    "id": "cmqmqpp0j0005wy3xyzgu0wkv",
+    "saleId": "cmqmqpp0j0001wy3xjgovhjgn",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 700,
+    "createdAt": "2026-06-20T19:17:55.552Z"
+  },
+  {
+    "id": "cmqmqpqyo000dwy3xoqk9t7dv",
+    "saleId": "cmqmqpqyo0008wy3xltg0li7t",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 2000,
+    "createdAt": "2026-06-20T19:17:58.081Z"
+  },
+  {
+    "id": "cmqmqpsgy000lwy3xsaym6h0v",
+    "saleId": "cmqmqpsgy000gwy3xduunvgji",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 1000,
+    "createdAt": "2026-06-20T19:18:00.034Z"
+  },
+  {
+    "id": "cmqodh3kh0005m38x50g8x73g",
+    "saleId": "cmqodh3kh0001m38xsck4gkb4",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 500,
+    "createdAt": "2026-06-21T22:42:51.764Z"
+  },
+  {
+    "id": "cmqodh5pj000cm38xqqfbmf3x",
+    "saleId": "cmqodh5pj0008m38xkybnxxvy",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 1000,
+    "createdAt": "2026-06-21T22:42:54.631Z"
+  },
+  {
+    "id": "cmqppwkwv0006fz8ur9uk1f3t",
+    "saleId": "cmqppwkwv0002fz8u8t0zniyl",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 1000,
+    "createdAt": "2026-06-22T21:18:35.743Z"
+  },
+  {
+    "id": "cmqsm5ws4000611z3l3wuy1mw",
+    "saleId": "cmqsm5ws4000211z3mx6yhava",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 1000,
+    "createdAt": "2026-06-24T21:57:11.092Z"
+  },
+  {
+    "id": "cmqsm5yvl000d11z3pjw3tl1f",
+    "saleId": "cmqsm5yvl000911z387s1gsle",
+    "serviceId": "cmozp0n1w000gli60sm6q3qdu",
+    "price": 1000,
+    "createdAt": "2026-06-24T21:57:13.810Z"
+  },
+  {
+    "id": "cmqsm5yvl000e11z3dhu0hoye",
+    "saleId": "cmqsm5yvl000911z387s1gsle",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 1000,
+    "createdAt": "2026-06-24T21:57:13.810Z"
+  },
+  {
+    "id": "cmqxhme0a000611czw3vzklhs",
+    "saleId": "cmqxhme0a000211czq32cemmc",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 1000,
+    "createdAt": "2026-06-28T07:48:52.715Z"
+  },
+  {
+    "id": "cmqy0qz3b00069nbba28xfm6p",
+    "saleId": "cmqy0qz3b00029nbb7d7auz2a",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 500,
+    "createdAt": "2026-06-28T16:44:19.367Z"
+  },
+  {
+    "id": "cmqy0r252000h9nbbrk3o7jxz",
+    "saleId": "cmqy0r251000d9nbbwln6tri2",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 750,
+    "createdAt": "2026-06-28T16:44:23.318Z"
+  },
+  {
+    "id": "cmrhyxu720007trfbsr3yy8zo",
+    "saleId": "cmrhyxu720002trfb5bgo0yw5",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 600,
+    "createdAt": "2026-07-12T15:49:03.902Z"
+  },
+  {
+    "id": "cmrhyxwam000etrfbl1bhuf6q",
+    "saleId": "cmrhyxwal000atrfbiruzghbt",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 600,
+    "createdAt": "2026-07-12T15:49:06.622Z"
+  },
+  {
+    "id": "cmrhyxxsw000ltrfbug1h7eoa",
+    "saleId": "cmrhyxxsw000htrfb4woa48zw",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 600,
+    "createdAt": "2026-07-12T15:49:08.576Z"
+  },
+  {
+    "id": "cmrhyxz2m000rtrfbrrnlrxbq",
+    "saleId": "cmrhyxz2m000ntrfbbe6rnb39",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 450,
+    "createdAt": "2026-07-12T15:49:10.222Z"
+  },
+  {
+    "id": "cmrhyy0do000ytrfbyyvt4krz",
+    "saleId": "cmrhyy0do000utrfbrtufz5fh",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 600,
+    "createdAt": "2026-07-12T15:49:11.916Z"
+  },
+  {
+    "id": "cmrhzfxyu0006omb32i2wwr5c",
+    "saleId": "cmrhzfxyu0001omb39yl1bo90",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 1200,
+    "createdAt": "2026-07-12T16:03:08.506Z"
+  },
+  {
+    "id": "cmrqhlp7s0006zwfefbpsiq1y",
+    "saleId": "cmrqhlp7s0002zwfeoutngzfm",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 450,
+    "createdAt": "2026-07-18T14:53:39.688Z"
+  },
+  {
+    "id": "cmrqhlr52000czwfel5u8ce2k",
+    "saleId": "cmrqhlr520008zwfen0k0l8mm",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 300,
+    "createdAt": "2026-07-18T14:53:42.182Z"
+  },
+  {
+    "id": "cmrqhltjm000nzwfea3f9klgq",
+    "saleId": "cmrqhltjm000jzwfeudqewaiw",
+    "serviceId": "cmozp0mhf000eli60xrec8ngl",
+    "price": 600,
+    "createdAt": "2026-07-18T14:53:45.299Z"
+  }
+]
