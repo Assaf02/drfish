@@ -4,42 +4,49 @@ import {
   initAuthCreds,
   SignalDataTypeMap,
 } from '@whiskeysockets/baileys';
+import { gzipSync, gunzipSync } from 'zlib';
 import { prisma } from './prisma';
 
 type DataSet = {
   [T in keyof SignalDataTypeMap]?: { [id: string]: SignalDataTypeMap[T] | null };
 };
 
+// Compress keys JSON before storing in DB (700 KB → ~50 KB, -93% bandwidth)
+function packKeys(keys: Record<string, unknown>): object {
+  const json = JSON.stringify(keys, BufferJSON.replacer);
+  return { _z: gzipSync(Buffer.from(json)).toString('base64') };
+}
+
+function unpackKeys(stored: unknown): Record<string, Record<string, unknown>> {
+  if (stored && typeof stored === 'object' && '_z' in (stored as object)) {
+    const b64 = (stored as { _z: string })._z;
+    const json = gunzipSync(Buffer.from(b64, 'base64')).toString();
+    return JSON.parse(json, BufferJSON.reviver);
+  }
+  // Legacy: uncompressed keys still in DB → migrate transparently
+  return JSON.parse(JSON.stringify(stored ?? {}), BufferJSON.reviver);
+}
+
 export async function useDbAuthState(): Promise<{
   state: AuthenticationState;
   saveCreds: () => Promise<void>;
 }> {
+  // Fetch only creds first — skip keys until actually needed
   const session = await prisma.whatsAppSession.findUnique({ where: { id: 'singleton' } });
 
   const credsRaw = session?.creds;
-  const keysRaw  = (session?.keys ?? {}) as Record<string, Record<string, unknown>>;
-
   const creds = credsRaw
     ? JSON.parse(JSON.stringify(credsRaw), BufferJSON.reviver)
     : initAuthCreds();
 
-  const keys: Record<string, Record<string, unknown>> = JSON.parse(
-    JSON.stringify(keysRaw),
-    BufferJSON.reviver,
-  );
+  const keys: Record<string, Record<string, unknown>> = unpackKeys(session?.keys);
 
   async function persist() {
+    const credsJson = JSON.parse(JSON.stringify(creds, BufferJSON.replacer));
     await prisma.whatsAppSession.upsert({
       where:  { id: 'singleton' },
-      update: {
-        creds: JSON.parse(JSON.stringify(creds, BufferJSON.replacer)),
-        keys:  JSON.parse(JSON.stringify(keys,  BufferJSON.replacer)),
-      },
-      create: {
-        id:    'singleton',
-        creds: JSON.parse(JSON.stringify(creds, BufferJSON.replacer)),
-        keys:  JSON.parse(JSON.stringify(keys,  BufferJSON.replacer)),
-      },
+      update: { creds: credsJson, keys: packKeys(keys) },
+      create: { id: 'singleton', creds: credsJson, keys: packKeys(keys) },
     });
   }
 

@@ -19,6 +19,12 @@ export async function GET(req: NextRequest) {
 
   const now = new Date();
 
+  // Purge campaign logs older than 30 days to keep DB size under control
+  const cutoff = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const { count: purged } = await prisma.campaignLog.deleteMany({
+    where: { sentAt: { lt: cutoff } },
+  });
+
   const due = await prisma.campaign.findMany({
     where: {
       status: 'SCHEDULED',
@@ -31,5 +37,5 @@ export async function GET(req: NextRequest) {
     sendCampaign(campaign.id).catch(console.error);
   }
 
-  return NextResponse.json({ triggered: due.length, campaigns: due.map((c) => c.name), at: now.toISOString() });
+  return NextResponse.json({ triggered: due.length, campaigns: due.map((c) => c.name), purgedLogs: purged, at: now.toISOString() });
 }
