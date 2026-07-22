@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
   MessageCircle, Plus, Play, Eye, Wifi, WifiOff,
   RefreshCw, Upload, X, CheckCircle2, AlertCircle,
-  Loader2, Users, FileText, Paperclip, Calendar, Shield, ChevronDown,
+  Loader2, Users, FileText, Paperclip, Calendar, Shield, ChevronDown, Trash2,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -66,11 +66,15 @@ function extractPhones(text: string): string[] {
 
 export default function CampaignsPage() {
   const router = useRouter();
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [loading,   setLoading]   = useState(true);
-  const [gowa,      setGowa]      = useState<GowaState>({ connected: false, unreachable: false, loading: true });
-  const [showModal, setShowModal] = useState(false);
-  const [starting,  setStarting]  = useState<string | null>(null);
+  const [campaigns,    setCampaigns]    = useState<Campaign[]>([]);
+  const [loading,      setLoading]      = useState(true);
+  const [gowa,         setGowa]         = useState<GowaState>({ connected: false, unreachable: false, loading: true });
+  const [showModal,    setShowModal]    = useState(false);
+  const [starting,     setStarting]     = useState<string | null>(null);
+  const [showPurge,    setShowPurge]    = useState(false);
+  const [purgeDays,    setPurgeDays]    = useState(30);
+  const [purging,      setPurging]      = useState(false);
+  const [purgeResult,  setPurgeResult]  = useState<number | null>(null);
 
   // ── Fetch list ──────────────────────────────────────────────────────────────
 
@@ -151,6 +155,27 @@ export default function CampaignsPage() {
     };
   }
 
+  // ── Purge logs ──────────────────────────────────────────────────────────────
+
+  async function purgeLogs() {
+    setPurging(true);
+    setPurgeResult(null);
+    try {
+      const res  = await fetch('/api/admin/purge-logs', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ days: purgeDays }),
+      });
+      const data = await res.json() as { deleted: number };
+      setPurgeResult(data.deleted);
+      toast.success(`${data.deleted} log${data.deleted !== 1 ? 's' : ''} supprimé${data.deleted !== 1 ? 's' : ''}`);
+    } catch {
+      toast.error('Erreur lors de la purge');
+    } finally {
+      setPurging(false);
+    }
+  }
+
   // ── Start campaign ──────────────────────────────────────────────────────────
 
   async function startCampaign(id: string) {
@@ -183,14 +208,97 @@ export default function CampaignsPage() {
             {campaigns.length} campagne{campaigns.length !== 1 ? 's' : ''}
           </p>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95"
-          style={{ background: 'var(--navy)', color: 'white', boxShadow: '0 2px 8px rgba(10,22,40,0.2)' }}
-        >
-          <Plus size={15} /> Nouvelle campagne
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => { setShowPurge(true); setPurgeResult(null); }}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-95"
+            style={{ background: 'rgba(239,68,68,0.08)', color: '#dc2626', border: '1px solid rgba(239,68,68,0.15)' }}
+          >
+            <Trash2 size={14} /> Purger les logs
+          </button>
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95"
+            style={{ background: 'var(--navy)', color: 'white', boxShadow: '0 2px 8px rgba(10,22,40,0.2)' }}
+          >
+            <Plus size={15} /> Nouvelle campagne
+          </button>
+        </div>
       </div>
+
+      {/* ── Purge logs modal ───────────────────────────────────────────────── */}
+      {showPurge && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(10,22,40,0.5)', backdropFilter: 'blur(4px)' }}>
+          <div className="w-full max-w-sm rounded-2xl p-6 space-y-5"
+            style={{ background: 'white', boxShadow: '0 24px 64px rgba(10,22,40,0.2)' }}>
+
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: 'rgba(239,68,68,0.08)' }}>
+                <Trash2 size={18} color="#dc2626" />
+              </div>
+              <div>
+                <h2 className="font-bold text-base" style={{ color: 'var(--navy)' }}>
+                  Purger les logs de campagne
+                </h2>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--gray-400)' }}>
+                  Supprime les entrées plus anciennes que la période choisie
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--gray-400)' }}>
+                Supprimer les logs de plus de
+              </p>
+              <div className="grid grid-cols-4 gap-2">
+                {[7, 30, 60, 90].map((d) => (
+                  <button
+                    key={d}
+                    onClick={() => setPurgeDays(d)}
+                    className="py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95"
+                    style={{
+                      background: purgeDays === d ? '#dc2626' : 'rgba(239,68,68,0.06)',
+                      color:      purgeDays === d ? 'white'   : '#dc2626',
+                      border:     `1px solid ${purgeDays === d ? '#dc2626' : 'rgba(239,68,68,0.15)'}`,
+                    }}
+                  >
+                    {d}j
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {purgeResult !== null && (
+              <div className="rounded-xl p-3 text-sm font-semibold text-center"
+                style={{ background: 'rgba(0,180,166,0.08)', color: 'var(--teal)' }}>
+                ✓ {purgeResult} log{purgeResult !== 1 ? 's' : ''} supprimé{purgeResult !== 1 ? 's' : ''}
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowPurge(false)}
+                className="flex-1 py-3 rounded-xl text-sm font-semibold"
+                style={{ background: 'var(--gray-50)', color: 'var(--gray-400)' }}
+              >
+                Fermer
+              </button>
+              <button
+                onClick={purgeLogs}
+                disabled={purging}
+                className="flex-1 py-3 rounded-xl text-sm font-bold transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                style={{ background: '#dc2626', color: 'white' }}
+              >
+                {purging
+                  ? <><Loader2 size={14} className="animate-spin" /> Purge…</>
+                  : <><Trash2 size={14} /> Purger {purgeDays} jours</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Table ──────────────────────────────────────────────────────────── */}
       {loading ? (
