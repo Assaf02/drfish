@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import makeWASocket, { DisconnectReason, fetchLatestBaileysVersion } from '@whiskeysockets/baileys';
+import makeWASocket, { DisconnectReason } from '@whiskeysockets/baileys';
 import QRCode from 'qrcode';
 import pino from 'pino';
 import { useDbAuthState, clearWhatsAppSession } from '@/lib/whatsapp-auth';
@@ -28,7 +28,7 @@ export async function GET() {
   (async () => {
     try {
       const { state, saveCreds } = await useDbAuthState();
-      const { version } = await fetchLatestBaileysVersion().catch(() => ({ version: [2, 3000, 1035194821] as [number, number, number], isLatest: false }));
+      const version: [number, number, number] = [2, 3000, 1035194821];
 
       const sock = makeWASocket({
         version,
@@ -36,7 +36,7 @@ export async function GET() {
         printQRInTerminal: false,
         logger: pino({ level: 'silent' }),
         browser: ['Dr Fish CRM', 'Chrome', '120.0'],
-        connectTimeoutMs: 60_000,
+        connectTimeoutMs: 8_000,
         defaultQueryTimeoutMs: undefined,
       });
 

@@ -311,7 +311,7 @@ export async function getDashboardData(fromISO: string, toISO: string) {
     prisma.sale.findMany({
       where: { date: { gte: from, lte: to } },
       include: {
-        items: { include: { product: { select: { name: true, purchasePrice: true } } } },
+        items: { include: { product: { select: { name: true, purchasePrice: true, category: true } } } },
         agent:    { select: { id: true, name: true } },
         client:   { select: { name: true } },
         services: { select: { id: true } },
@@ -338,16 +338,19 @@ export async function getDashboardData(fromISO: string, toISO: string) {
   });
   const margin = revenue > 0 ? ((revenue - totalCost) / revenue) * 100 : 0;
 
-  // Best product
-  const productMap: Record<string, { name: string; quantity: number }> = {};
+  // Top products
+  const productMap: Record<string, { name: string; category: string; quantity: number; revenue: number; orders: number }> = {};
   sales.forEach((sale) => {
     sale.items.forEach((item) => {
       const k = item.product.name;
-      if (!productMap[k]) productMap[k] = { name: k, quantity: 0 };
+      if (!productMap[k]) productMap[k] = { name: k, category: item.product.category, quantity: 0, revenue: 0, orders: 0 };
       productMap[k].quantity += item.quantity;
+      productMap[k].revenue  += item.subtotal;
+      productMap[k].orders++;
     });
   });
-  const bestProduct = Object.values(productMap).sort((a, b) => b.quantity - a.quantity)[0] ?? null;
+  const topProducts = Object.values(productMap).sort((a, b) => b.quantity - a.quantity).slice(0, 10);
+  const bestProduct = topProducts[0] ?? null;
 
   // Recent sales — all fields pre-serialized
   const recentSales = sales.slice(0, 10).map((sale) => ({
@@ -381,6 +384,7 @@ export async function getDashboardData(fromISO: string, toISO: string) {
     pendingOrders,
     margin,
     bestProduct,
+    topProducts,
     recentSales,
     chartData,
     agentsStats,

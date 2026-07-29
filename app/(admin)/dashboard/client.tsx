@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   TrendingUp, ShoppingCart, Star, AlertTriangle, Clock,
-  Fish, Users, Sparkles, ChevronLeft, ChevronRight, Loader2,
+  Fish, Users, Sparkles, ChevronLeft, ChevronRight, Loader2, BarChart2,
 } from 'lucide-react';
 import { DayPicker } from 'react-day-picker';
 import type { DateRange } from 'react-day-picker';
@@ -300,6 +300,9 @@ export function DashboardClient({
           )}
         </div>
 
+        {/* Top poissons */}
+        <TopPoissons products={data.topProducts} label={label} />
+
         {/* Bottom grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
@@ -362,28 +365,25 @@ export function DashboardClient({
           {/* Right column */}
           <div className="space-y-4">
 
-            {/* Best product */}
-            <div className="card p-5">
-              <p className="label mb-3">Meilleur produit · {label}</p>
-              {data.bestProduct ? (
+            {/* Best product — quick summary */}
+            {data.bestProduct && (
+              <div className="card p-5">
+                <p className="label mb-3">N°1 · {label}</p>
                 <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-xl flex items-center justify-center"
-                    style={{ background: 'rgba(0,180,166,0.08)' }}>
-                    <FishIcon size={22} color="var(--teal)" />
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl flex-shrink-0">
+                    🏆
                   </div>
-                  <div>
-                    <p className="font-bold" style={{ fontSize: 15, color: 'var(--navy)' }}>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold truncate" style={{ fontSize: 15, color: 'var(--navy)' }}>
                       {data.bestProduct.name}
                     </p>
                     <p className="text-[12px] mt-0.5" style={{ color: 'var(--gray-400)' }}>
-                      {data.bestProduct.quantity.toFixed(1)} kg
+                      {data.bestProduct.quantity.toFixed(1)} kg · {data.bestProduct.orders} cmd
                     </p>
                   </div>
                 </div>
-              ) : (
-                <p className="text-[14px]" style={{ color: 'var(--gray-400)' }}>Aucune donnée</p>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Alerts */}
             {(data.pendingOrders > 0 || data.expiringSubscriptions.length > 0) && (
@@ -456,6 +456,133 @@ export function DashboardClient({
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ── Top poissons ───────────────────────────────────────────────────────────────
+
+type TopProduct = { name: string; category: string; quantity: number; revenue: number; orders: number };
+
+function TopPoissons({ products, label }: { products: TopProduct[]; label: string }) {
+  const [sortBy, setSortBy] = useState<'qty' | 'rev'>('qty');
+
+  const sorted = [...products].sort((a, b) =>
+    sortBy === 'qty' ? b.quantity - a.quantity : b.revenue - a.revenue,
+  );
+
+  const max = sorted[0]
+    ? (sortBy === 'qty' ? sorted[0].quantity : sorted[0].revenue)
+    : 1;
+
+  const medals = ['🥇', '🥈', '🥉'];
+
+  return (
+    <div className="card overflow-hidden">
+      {/* Header */}
+      <div className="px-6 py-4 flex items-center justify-between"
+        style={{ borderBottom: '1px solid var(--gray-50)' }}>
+        <div className="flex items-center gap-2">
+          <BarChart2 size={15} style={{ color: 'var(--gray-400)' }} />
+          <h2 className="font-bold" style={{ fontSize: 15, color: 'var(--navy)' }}>
+            Top poissons
+          </h2>
+          <span className="text-[12px]" style={{ color: 'var(--gray-400)' }}>· {label}</span>
+        </div>
+        {/* Toggle */}
+        <div className="flex items-center gap-1 p-0.5 rounded-xl"
+          style={{ background: 'var(--gray-50)' }}>
+          {([['qty', 'Quantité (kg)'], ['rev', 'Revenu (FCFA)']] as const).map(([key, lbl]) => (
+            <button
+              key={key}
+              onClick={() => setSortBy(key)}
+              className="px-3 py-1 rounded-lg text-xs font-semibold transition-all"
+              style={{
+                background: sortBy === key ? 'white' : 'transparent',
+                color:      sortBy === key ? 'var(--navy)' : 'var(--gray-400)',
+                boxShadow:  sortBy === key ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+              }}
+            >
+              {lbl}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* List */}
+      {sorted.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-12 gap-2">
+          <FishIcon size={36} color="var(--gray-100)" />
+          <p className="text-sm" style={{ color: 'var(--gray-400)' }}>Aucune vente sur cette période</p>
+        </div>
+      ) : (
+        <div className="divide-y" style={{ borderColor: 'var(--gray-50)' }}>
+          {sorted.map((p, i) => {
+            const barPct = max > 0 ? (sortBy === 'qty' ? p.quantity : p.revenue) / max * 100 : 0;
+            const isTop3 = i < 3;
+            return (
+              <div key={p.name} className="px-6 py-3.5 flex items-center gap-4">
+                {/* Rank */}
+                <div className="w-7 flex-shrink-0 text-center">
+                  {isTop3 ? (
+                    <span className="text-base leading-none">{medals[i]}</span>
+                  ) : (
+                    <span className="text-[13px] font-bold" style={{ color: 'var(--gray-400)' }}>{i + 1}</span>
+                  )}
+                </div>
+
+                {/* Name + bar */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline gap-2 mb-1.5">
+                    <p className="font-semibold text-[13px] truncate" style={{ color: 'var(--navy)' }}>
+                      {p.name}
+                    </p>
+                    <span className="text-[11px] flex-shrink-0" style={{ color: 'var(--gray-400)' }}>
+                      {p.category}
+                    </span>
+                  </div>
+                  {/* Bar */}
+                  <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--gray-50)' }}>
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{
+                        width: `${barPct}%`,
+                        background: isTop3
+                          ? 'linear-gradient(90deg, var(--teal), #25d366)'
+                          : 'var(--blue)',
+                        opacity: isTop3 ? 1 : 0.55,
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Stats */}
+                <div className="text-right flex-shrink-0 min-w-[100px]">
+                  {sortBy === 'qty' ? (
+                    <>
+                      <p className="font-extrabold text-[15px]" style={{ color: 'var(--navy)', letterSpacing: '-0.3px' }}>
+                        {p.quantity % 1 === 0 ? p.quantity : p.quantity.toFixed(1)} kg
+                      </p>
+                      <p className="text-[11px] mt-0.5" style={{ color: 'var(--gray-400)' }}>
+                        {formatCFA(p.revenue)} · {p.orders} cmd
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="font-extrabold text-[15px]" style={{ color: 'var(--navy)', letterSpacing: '-0.3px' }}>
+                        {formatCFA(p.revenue)}
+                      </p>
+                      <p className="text-[11px] mt-0.5" style={{ color: 'var(--gray-400)' }}>
+                        {p.quantity % 1 === 0 ? p.quantity : p.quantity.toFixed(1)} kg · {p.orders} cmd
+                      </p>
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

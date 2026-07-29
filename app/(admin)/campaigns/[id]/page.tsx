@@ -124,7 +124,7 @@ export default function CampaignDetailPage() {
         }
 
         if (data.status === 'disconnected') {
-          toast.error('WhatsApp déconnecté — reconnectez depuis la page Campagnes');
+          toast.error('WhatsApp déconnecté — allez sur la page WhatsApp pour reconnecter');
           stopSending();
           await fetch(`/api/campaigns/${id}/stop`, { method: 'POST' }).catch(() => {});
           fetchCampaign();
@@ -460,7 +460,7 @@ export default function CampaignDetailPage() {
               WhatsApp déconnecté — session expirée
             </p>
             <p className="text-xs mt-0.5" style={{ color: 'var(--gray-400)' }}>
-              Reconnectez WhatsApp depuis la page <strong>Campagnes</strong>, puis cliquez <strong>Démarrer</strong> ici pour reprendre.
+              Allez sur la page <strong>WhatsApp</strong> pour reconnecter, puis cliquez <strong>Démarrer</strong> ici pour reprendre.
             </p>
           </div>
         </div>

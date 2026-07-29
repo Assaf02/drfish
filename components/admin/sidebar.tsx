@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
 import {
   LayoutDashboard, Fish, Scissors, ShoppingCart,
-  Users, Star, BarChart3, Settings, LogOut, Menu, X, QrCode, MessageCircle, Bell,
+  Users, Star, BarChart3, Settings, LogOut, Menu, X, QrCode, MessageCircle, Bell, Wifi,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DrFishLogo } from '@/components/icons/DrFishLogo';
@@ -21,7 +21,8 @@ const navItems = [
   { href: '/subscriptions', label: 'Abonnements',     icon: Star,            badge: null },
   { href: '/agents',        label: 'Agents',          icon: BarChart3,       badge: null },
   { href: '/referrals',     label: 'Parrainage',      icon: QrCode,          badge: null },
-  { href: '/campaigns',     label: 'Campagnes WA',    icon: MessageCircle,   badge: 'gowa' },
+  { href: '/whatsapp',      label: 'WhatsApp',         icon: Wifi,            badge: 'gowa' },
+  { href: '/campaigns',     label: 'Campagnes WA',    icon: MessageCircle,   badge: null },
   { href: '/alerts',        label: 'Alertes auto',    icon: Bell,            badge: null },
   { href: '/settings',      label: 'Paramètres',      icon: Settings,        badge: null },
 ];
