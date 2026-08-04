@@ -88,12 +88,14 @@ export async function POST(
   function elapsed() { return Date.now() - startedAt; }
   function budgetLeft() { return TOTAL_BUDGET_MS - elapsed(); }
 
-  const session = await getServerSession(authOptions);
+  const { id: campaignId } = params;
+  // Parallelize auth check + campaign fetch to save one DB round-trip
+  const [session, campaign] = await Promise.all([
+    getServerSession(authOptions),
+    prisma.campaign.findUnique({ where: { id: campaignId } }),
+  ]);
   if (session?.user?.role !== 'ADMIN')
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const { id: campaignId } = params;
-  const campaign = await prisma.campaign.findUnique({ where: { id: campaignId } });
   if (!campaign) return NextResponse.json({ status: 'not_found' }, { status: 404 });
 
   // Check daily limit
@@ -173,8 +175,13 @@ export async function POST(
     sock = await openWASocket(budgetLeft());
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    const waErr = msg === 'WA_NOT_CONNECTED' || msg === 'WA_QR_NEEDED' || msg === 'WA_LOGGED_OUT';
-    return NextResponse.json({ status: 'disconnected', error: msg, needsScan: waErr });
+    // Fatal errors require the user to reconnect WhatsApp
+    const fatal = msg === 'WA_NOT_CONNECTED' || msg === 'WA_QR_NEEDED' || msg === 'WA_LOGGED_OUT';
+    if (fatal) {
+      return NextResponse.json({ status: 'disconnected', error: msg, needsScan: true });
+    }
+    // WA_TIMEOUT / WA_CLOSED are transient — let the browser retry
+    return NextResponse.json({ status: 'wa_retry', error: msg });
   }
 
   let ok = false;

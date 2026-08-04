@@ -70,9 +70,10 @@ export default function CampaignDetailPage() {
   const [savingLimit, setSavingLimit] = useState(false);
   const [sending,   setSending]   = useState(false);  // browser loop running
   const [countdown, setCountdown] = useState<number | null>(null); // seconds until next send
-  const sendingRef  = useRef(false);
-  const timerRef    = useRef<ReturnType<typeof setInterval>>();
+  const sendingRef       = useRef(false);
+  const timerRef         = useRef<ReturnType<typeof setInterval>>();
   const countdownIntervalRef = useRef<ReturnType<typeof setInterval>>();
+  const waRetryRef       = useRef(0);   // consecutive WA transient failures
 
   // ── Fetch ────────────────────────────────────────────────────────────────
 
@@ -128,6 +129,23 @@ export default function CampaignDetailPage() {
           stopSending();
           await fetch(`/api/campaigns/${id}/stop`, { method: 'POST' }).catch(() => {});
           fetchCampaign();
+          waRetryRef.current = 0;
+          return;
+        }
+
+        // Transient WA connection failure (timeout / socket closed) — retry automatically
+        if (data.status === 'wa_retry') {
+          waRetryRef.current += 1;
+          if (waRetryRef.current >= 3) {
+            toast.error(`WhatsApp instable après 3 tentatives (${data.error}) — vérifiez la connexion puis relancez`);
+            stopSending();
+            await fetch(`/api/campaigns/${id}/stop`, { method: 'POST' }).catch(() => {});
+            fetchCampaign();
+            waRetryRef.current = 0;
+            return;
+          }
+          // Brief pause then retry — no toast on intermediate failures
+          timerRef.current = setTimeout(loop, 5_000);
           return;
         }
 
@@ -142,6 +160,9 @@ export default function CampaignDetailPage() {
           timerRef.current = setTimeout(loop, data.status === 'initializing' ? 1_000 : 3_000);
           return;
         }
+
+        // Successful send — reset WA retry counter
+        waRetryRef.current = 0;
 
         // Schedule next send after delayMs
         const delayMs = (data.delayMs ?? 14_000) as number;
