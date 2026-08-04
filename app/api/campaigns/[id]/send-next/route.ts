@@ -22,7 +22,9 @@ function normalizePhone(raw: string): string | null {
 }
 
 function humanDelayMs(base: number) {
-  return Math.round((0.7 + Math.random() * 1.1) * base * 1_000);
+  // Minimum 20s between sends to avoid WA rate-limiting on WebSocket reconnects
+  const effective = Math.max(base, 20);
+  return Math.round((0.7 + Math.random() * 1.1) * effective * 1_000);
 }
 
 function longPauseMs() { return Math.round((25 + Math.random() * 30) * 1_000); }

@@ -136,21 +136,31 @@ export default function CampaignDetailPage() {
         // Transient WA connection failure (timeout / socket closed) — retry automatically
         if (data.status === 'wa_retry') {
           waRetryRef.current += 1;
-          if (waRetryRef.current >= 3) {
-            // 3x WA_CLOSED = session invalide (clés corrompues) — effacer + forcer rescan
-            if (data.error === 'WA_CLOSED') {
-              await fetch('/api/whatsapp/clear-session', { method: 'POST' }).catch(() => {});
-              toast.error('Session WhatsApp expirée — reconnectez sur la page WhatsApp puis relancez');
+
+          if (data.error === 'WA_CLOSED') {
+            // WA_CLOSED = rate-limit sur les reconnexions rapides, pas session invalide.
+            // Ne jamais effacer la session. Après 5 échecs consécutifs, pause 2 min.
+            if (waRetryRef.current >= 5) {
+              toast.warning('WhatsApp indisponible temporairement — reprise automatique dans 2 min');
+              waRetryRef.current = 0;
+              timerRef.current = setTimeout(loop, 120_000);
             } else {
-              toast.error('WhatsApp instable — reconnectez sur la page WhatsApp puis relancez');
+              // Backoff progressif : 20s, 30s, 45s, 60s entre tentatives
+              const backoff = Math.min(20_000 * waRetryRef.current, 60_000);
+              timerRef.current = setTimeout(loop, backoff);
             }
+            return;
+          }
+
+          // WA_TIMEOUT : quelques retries courts puis arrêt
+          if (waRetryRef.current >= 3) {
+            toast.error('WhatsApp instable — reconnectez sur la page WhatsApp puis relancez');
             stopSending();
             await fetch(`/api/campaigns/${id}/stop`, { method: 'POST' }).catch(() => {});
             fetchCampaign();
             waRetryRef.current = 0;
             return;
           }
-          // Brief pause then retry — no toast on intermediate failures
           timerRef.current = setTimeout(loop, 5_000);
           return;
         }
