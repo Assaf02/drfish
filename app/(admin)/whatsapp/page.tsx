@@ -8,7 +8,7 @@ import {
 
 type Phase = 'checking' | 'idle' | 'connecting' | 'qr' | 'syncing' | 'success' | 'failed';
 
-const QR_WINDOW_SECONDS = 60;
+const QR_WINDOW_SECONDS = 55; // Vercel keeps the function alive ~60s; QR valid for that window
 const MAX_ATTEMPTS = 6;
 
 export default function WhatsAppPage() {
@@ -24,6 +24,7 @@ export default function WhatsAppPage() {
   const pollRef     = useRef<ReturnType<typeof setInterval>>();
   const retryRef    = useRef<ReturnType<typeof setTimeout>>();
   const activeRef   = useRef(false);
+  const qrShownRef  = useRef(false); // true once QR image is in browser
 
   useEffect(() => {
     checkStatus();
@@ -32,6 +33,7 @@ export default function WhatsAppPage() {
 
   function cleanup() {
     activeRef.current = false;
+    qrShownRef.current = false;
     esRef.current?.close();
     esRef.current = null;
     clearInterval(cntdwnRef.current);
@@ -67,11 +69,10 @@ export default function WhatsAppPage() {
         };
 
         if (msg.type === 'qr') {
-          // Close SSE immediately — we have the image, we no longer need the stream.
-          // The QR is valid on WA's side for ~60s; we poll status to catch the scan.
-          es.close();
-          esRef.current = null;
-
+          // Keep SSE open — the Baileys WebSocket on the server MUST stay alive
+          // while the phone synchronizes. Closing it kills the WA pairing handshake
+          // and causes "Couldn't link device".
+          qrShownRef.current = true;
           setQrImage(msg.qrDataUrl ?? null);
           setPhase('qr');
 
@@ -82,14 +83,9 @@ export default function WhatsAppPage() {
           cntdwnRef.current = setInterval(() => {
             secondsLeft = Math.max(0, secondsLeft - 1);
             setCountdown(secondsLeft);
-            if (secondsLeft <= 0) {
-              // QR expired on WA side — fetch a new one
-              clearInterval(cntdwnRef.current);
-              startQr(attempt + 1);
-            }
           }, 1_000);
 
-          // Poll status every 2s to detect scan
+          // Poll status every 2s — catches successful scan even if SSE is slow
           clearInterval(pollRef.current);
           pollRef.current = setInterval(async () => {
             if (!activeRef.current) return;
@@ -107,6 +103,7 @@ export default function WhatsAppPage() {
         }
 
         if (msg.type === 'connected') {
+          // Server confirmed scan — keep QR visible during sync
           clearInterval(cntdwnRef.current);
           clearInterval(pollRef.current);
           setPhase('syncing');
@@ -125,9 +122,13 @@ export default function WhatsAppPage() {
     };
 
     es.onerror = () => {
-      setLastError('Connexion SSE échouée (auth ou réseau)');
       es.close();
       esRef.current = null;
+      if (!qrShownRef.current) {
+        // Failed before QR arrived — show error and retry
+        setLastError('Connexion échouée — nouvelle tentative…');
+      }
+      // Whether QR was shown or not, schedule a new attempt
       scheduleRetry(attempt);
     };
   }
