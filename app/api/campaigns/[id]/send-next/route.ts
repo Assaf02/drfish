@@ -74,9 +74,11 @@ async function openWASocket(budgetMs: number): Promise<WASocket> {
       }
       if (connection === 'close') {
         clearTimeout(timeout);
-        const isLoggedOut = (lastDisconnect?.error as Boom)?.output?.statusCode === DisconnectReason.loggedOut;
+        const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
+        const isLoggedOut = statusCode === DisconnectReason.loggedOut;
+        console.error(`WA close code=${statusCode} err=${lastDisconnect?.error?.message ?? '?'}`);
         if (isLoggedOut) await clearWhatsAppSession().catch(() => {});
-        reject(new Error(isLoggedOut ? 'WA_LOGGED_OUT' : 'WA_CLOSED'));
+        reject(new Error(isLoggedOut ? 'WA_LOGGED_OUT' : `WA_CLOSED:${statusCode ?? 0}`));
       }
     });
   });
@@ -183,6 +185,7 @@ export async function POST(
       return NextResponse.json({ status: 'disconnected', error: msg, needsScan: true });
     }
     // WA_TIMEOUT / WA_CLOSED are transient — let the browser retry
+    console.error(`send-next WA error: ${msg}`);
     return NextResponse.json({ status: 'wa_retry', error: msg });
   }
 
