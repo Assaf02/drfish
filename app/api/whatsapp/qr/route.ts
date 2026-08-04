@@ -27,6 +27,9 @@ export async function GET() {
 
   (async () => {
     try {
+      // Always start fresh so Baileys connects as a new device and WA sends a QR.
+      // If we reuse stale/broken creds, WA rejects the reconnect silently (no QR).
+      await clearWhatsAppSession().catch(() => {});
       const { state, saveCreds } = await useDbAuthState();
       const version: [number, number, number] = [2, 3000, 1035194821];
 
@@ -44,8 +47,6 @@ export async function GET() {
 
       sock.ev.on('connection.update', async ({ connection, lastDisconnect, qr }) => {
         if (qr) {
-          // QR = previous session expired. Clear stale creds so status shows "disconnected".
-          await clearWhatsAppSession().catch(() => {});
           try {
             const qrDataUrl = await QRCode.toDataURL(qr, { width: 300, margin: 2 });
             send({ type: 'qr', qrDataUrl });
