@@ -1,15 +1,16 @@
 /**
- * Run once locally to scan WhatsApp QR and save credentials to Neon DB.
- * Usage:              npx tsx scripts/wa-setup.ts
- * Force rescan:       npx tsx scripts/wa-setup.ts --reset
+ * Génère un QR WhatsApp dans le terminal et sauvegarde la session dans Neon DB.
+ * Usage :           npx tsx scripts/wa-setup.ts
+ * Forcer un rescan: npx tsx scripts/wa-setup.ts --reset
  *
- * The QR appears in the terminal. Scan it with WhatsApp > Appareils liés.
- * Credentials are saved to Neon — Vercel reuses them for all campaign sends.
+ * Scannez le QR avec WhatsApp > Appareils liés > Lier un appareil.
+ * Les credentials sont sauvegardés dans Neon — Vercel les réutilise pour les campagnes.
  */
 
 import * as dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { gzipSync, gunzipSync } from 'zlib';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '..', '.env.local') });
@@ -30,11 +31,26 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-// ── DB auth state (same logic as lib/whatsapp-auth.ts) ────────────────────────
+// ── DB auth state (identical logic to lib/whatsapp-auth.ts, with gzip) ────────
 
 type DataSet = {
   [T in keyof SignalDataTypeMap]?: { [id: string]: SignalDataTypeMap[T] | null };
 };
+
+function packKeys(keys: Record<string, unknown>): object {
+  const json = JSON.stringify(keys, BufferJSON.replacer);
+  return { _z: gzipSync(Buffer.from(json)).toString('base64') };
+}
+
+function unpackKeys(stored: unknown): Record<string, Record<string, unknown>> {
+  if (stored && typeof stored === 'object' && '_z' in (stored as object)) {
+    const b64 = (stored as { _z: string })._z;
+    const json = gunzipSync(Buffer.from(b64, 'base64')).toString();
+    return JSON.parse(json, BufferJSON.reviver);
+  }
+  // Legacy: clés non-compressées encore en DB → migration transparente
+  return JSON.parse(JSON.stringify(stored ?? {}), BufferJSON.reviver);
+}
 
 async function useDbAuthState(): Promise<{
   state: AuthenticationState;
@@ -42,30 +58,18 @@ async function useDbAuthState(): Promise<{
 }> {
   const session = await prisma.whatsAppSession.findUnique({ where: { id: 'singleton' } });
 
-  const credsRaw = session?.creds;
-  const keysRaw  = (session?.keys ?? {}) as Record<string, Record<string, unknown>>;
-
-  const creds = credsRaw
-    ? JSON.parse(JSON.stringify(credsRaw), BufferJSON.reviver)
+  const creds = session?.creds
+    ? JSON.parse(JSON.stringify(session.creds), BufferJSON.reviver)
     : initAuthCreds();
 
-  const keys: Record<string, Record<string, unknown>> = JSON.parse(
-    JSON.stringify(keysRaw),
-    BufferJSON.reviver,
-  );
+  const keys: Record<string, Record<string, unknown>> = unpackKeys(session?.keys);
 
   async function persist() {
+    const credsJson = JSON.parse(JSON.stringify(creds, BufferJSON.replacer));
     await prisma.whatsAppSession.upsert({
       where:  { id: 'singleton' },
-      update: {
-        creds: JSON.parse(JSON.stringify(creds, BufferJSON.replacer)),
-        keys:  JSON.parse(JSON.stringify(keys,  BufferJSON.replacer)),
-      },
-      create: {
-        id:    'singleton',
-        creds: JSON.parse(JSON.stringify(creds, BufferJSON.replacer)),
-        keys:  JSON.parse(JSON.stringify(keys,  BufferJSON.replacer)),
-      },
+      update: { creds: credsJson, keys: packKeys(keys) },
+      create: { id: 'singleton', creds: credsJson, keys: packKeys(keys) },
     });
   }
 
@@ -97,13 +101,21 @@ async function useDbAuthState(): Promise<{
   return { state, saveCreds: persist };
 }
 
-// ── Connect and wait for QR scan (auto-regenerates QR when it expires) ────────
+// ── Connexion et attente du scan QR ───────────────────────────────────────────
 
 async function connectAndScan(): Promise<void> {
   const { state, saveCreds } = await useDbAuthState();
-  const { version, isLatest } = await fetchLatestBaileysVersion();
-  if (!isLatest) console.warn('⚠️  Version Baileys potentiellement obsolète — mise à jour recommandée');
-  console.log(`Connexion à WhatsApp (version ${version.join('.')})...\n`);
+
+  let version: [number, number, number] = [2, 3000, 1035194821];
+  try {
+    const res = await fetchLatestBaileysVersion();
+    version = res.version;
+    if (!res.isLatest) console.warn('⚠️  Version Baileys potentiellement obsolète');
+  } catch {
+    console.warn('⚠️  Impossible de récupérer la dernière version WA, version de repli utilisée');
+  }
+
+  console.log(`Connexion WA (version ${version.join('.')})...\n`);
 
   return new Promise<void>((resolve, reject) => {
     const globalTimeout = setTimeout(() => {
@@ -111,13 +123,12 @@ async function connectAndScan(): Promise<void> {
     }, 5 * 60_000);
 
     let qrCount = 0;
-    let currentSock: WASocket | null = null;
     let done = false;
 
     function openSock() {
       if (done) return;
 
-      const sock = makeWASocket({
+      const sock: WASocket = makeWASocket({
         version,
         auth: state,
         printQRInTerminal: false,
@@ -127,7 +138,6 @@ async function connectAndScan(): Promise<void> {
         defaultQueryTimeoutMs: undefined,
       });
 
-      currentSock = sock;
       sock.ev.on('creds.update', saveCreds);
 
       sock.ev.on('connection.update', async ({ connection, lastDisconnect, qr }) => {
@@ -136,9 +146,10 @@ async function connectAndScan(): Promise<void> {
         if (qr) {
           qrCount++;
           console.clear();
-          console.log('\n🐟 Dr Fish CRM — Scanne ce QR dans WhatsApp > Appareils liés > Lier un appareil\n');
+          console.log('\n🐟  Dr Fish CRM — Scanne ce QR dans WhatsApp > Appareils liés > Lier un appareil\n');
           qrcodeTerminal.generate(qr, { small: true });
-          console.log(`\n⏳ En attente du scan... (QR n°${qrCount}${qrCount > 1 ? ' — le précédent a expiré' : ''})\n`);
+          if (qrCount > 1) console.log(`\n⏳  QR n°${qrCount} — le précédent a expiré\n`);
+          else console.log('\n⏳  En attente du scan...\n');
         }
 
         if (connection === 'open') {
@@ -146,9 +157,9 @@ async function connectAndScan(): Promise<void> {
           clearTimeout(globalTimeout);
           await saveCreds();
           const me = sock.authState?.creds?.me;
-          console.log(`\n✅ Connecté ! Compte : ${me?.name ?? '?'} (${me?.id ?? '?'})`);
-          console.log('✅ Credentials sauvegardés dans Neon DB.');
-          console.log('✅ Les campagnes Vercel peuvent maintenant envoyer des messages.\n');
+          console.log(`\n✅  Connecté ! Compte : ${me?.name ?? '?'} (${me?.id ?? '?'})`);
+          console.log('✅  Session sauvegardée dans Neon DB.');
+          console.log('✅  Vercel peut maintenant envoyer des campagnes WA.\n');
           try { sock.ws.close(); } catch { /* ignore */ }
           resolve();
         }
@@ -160,21 +171,20 @@ async function connectAndScan(): Promise<void> {
           if (isLoggedOut) {
             done = true;
             clearTimeout(globalTimeout);
-            reject(new Error('Session refusée par WhatsApp — réessaie'));
+            reject(new Error('Session refusée par WhatsApp (loggedOut) — réessaie avec --reset'));
             return;
           }
 
           if (qrCount === 0) {
-            // Closed before any QR = expired session in DB
+            // Fermé avant tout QR = session expirée en DB
             done = true;
             clearTimeout(globalTimeout);
-            console.log('⚠️  Session expirée en DB — effacement et reconnexion...\n');
             reject(new Error('SESSION_EXPIRED'));
             return;
           }
 
-          // QR expired → reopen connection for a new QR
-          console.log('\n🔄 QR expiré — nouveau QR en cours...\n');
+          // QR expiré → rouvre pour un nouveau QR
+          console.log('\n🔄  QR expiré — nouveau QR en cours...\n');
           try { sock.ws.close(); } catch { /* ignore */ }
           setTimeout(openSock, 1_500);
         }
@@ -188,22 +198,22 @@ async function connectAndScan(): Promise<void> {
 // ── Main ───────────────────────────────────────────────────────────────────────
 
 async function main() {
-  console.log('\n🐟 Dr Fish CRM — Connexion WhatsApp\n');
-  console.log('Connexion à la base de données Neon...');
+  console.log('\n🐟  Dr Fish CRM — Connexion WhatsApp\n');
 
-  // --reset flag: clear session before doing anything else
-  if (process.argv.includes('--reset')) {
-    console.log('🗑️  Suppression de la session existante...');
+  const forceReset = process.argv.includes('--reset');
+
+  if (forceReset) {
+    console.log('🗑️   Suppression de la session existante...');
     await prisma.whatsAppSession.deleteMany({ where: { id: 'singleton' } });
-    console.log('✅ Session supprimée.\n');
+    console.log('✅  Session supprimée.\n');
   } else {
-    // Check if already connected
-    const existingSession = await prisma.whatsAppSession.findUnique({ where: { id: 'singleton' } });
-    if (existingSession?.creds) {
-      const creds = JSON.parse(JSON.stringify(existingSession.creds), BufferJSON.reviver);
+    // Vérifie si déjà connecté
+    const existing = await prisma.whatsAppSession.findUnique({ where: { id: 'singleton' } });
+    if (existing?.creds) {
+      const creds = JSON.parse(JSON.stringify(existing.creds), BufferJSON.reviver);
       if (creds?.me) {
-        console.log(`\n✅ Session existante : ${creds.me.name ?? '?'} (${creds.me.id})`);
-        console.log('ℹ️  Pour rescanner : npx tsx scripts/wa-setup.ts --reset\n');
+        console.log(`✅  Session existante : ${creds.me.name ?? '?'} (${creds.me.id})`);
+        console.log('ℹ️   Pour rescanner : npx tsx scripts/wa-setup.ts --reset\n');
         await prisma.$disconnect();
         process.exit(0);
       }
@@ -218,6 +228,7 @@ async function main() {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       if (msg === 'SESSION_EXPIRED' && retries < 2) {
+        console.log('⚠️   Session expirée détectée — nettoyage et nouvelle tentative...\n');
         await prisma.whatsAppSession.deleteMany({ where: { id: 'singleton' } });
         retries++;
         continue;
@@ -231,7 +242,7 @@ async function main() {
 }
 
 main().catch(async (err) => {
-  console.error('\n❌ Erreur :', err.message);
+  console.error('\n❌  Erreur :', err instanceof Error ? err.message : String(err));
   await prisma.$disconnect().catch(() => {});
   process.exit(1);
 });

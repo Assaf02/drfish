@@ -11,6 +11,8 @@
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
+    "wa:connect": "tsx scripts/wa-setup.ts --reset",
+    "wa:status": "tsx scripts/wa-setup.ts",
     "postinstall": "prisma generate && node -e \"try{require('fs').writeFileSync('node_modules/@whiskeysockets/baileys/lib/Defaults/baileys-version.json','{\\\"version\\\":[2,3000,1035194821]}')}catch(e){}\""
   },
   "dependencies": {
