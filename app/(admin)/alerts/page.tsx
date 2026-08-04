@@ -85,17 +85,19 @@ export default function AlertsPage() {
   async function runNow() {
     setRunning(true);
     try {
-      const res  = await fetch('/api/cron/alerts', {
-        headers: { authorization: `Bearer ${process.env.NEXT_PUBLIC_CRON_SECRET ?? 'drfish-cron'}` },
-      });
+      const res  = await fetch('/api/cron/alerts');
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(err.error ?? `Erreur ${res.status}`);
+      }
       const data = await res.json() as { created: string[] };
       if (data.created.length === 0) {
         toast.info('Aucune alerte à envoyer pour le moment');
       } else {
         toast.success(`${data.created.length} campagne(s) créée(s) : ${data.created.join(', ')}`);
       }
-    } catch {
-      toast.error('Erreur lors de l\'exécution');
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Erreur lors de l\'exécution');
     } finally {
       setRunning(false);
     }

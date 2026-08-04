@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { normalizePhone } from '@/lib/phoneUtils';
 
@@ -17,7 +19,11 @@ export async function GET(req: NextRequest) {
   const cronHeader = req.headers.get('x-vercel-cron');
   const authHeader = req.headers.get('authorization');
   const secret     = process.env.CRON_SECRET;
-  const authorized = cronHeader === '1' || (secret && authHeader === `Bearer ${secret}`);
+  const session    = await getServerSession(authOptions);
+  const authorized =
+    cronHeader === '1' ||
+    (secret && authHeader === `Bearer ${secret}`) ||
+    session?.user?.role === 'ADMIN';
   if (!authorized) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const now      = new Date();
