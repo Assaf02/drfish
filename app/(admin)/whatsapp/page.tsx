@@ -57,6 +57,7 @@ export default function WhatsAppPage() {
     setAttempts(attempt);
     setPhase('connecting');
     setQrImage(null);
+    setLastError(null);
 
     const es = new EventSource('/api/whatsapp/qr');
     esRef.current = es;
@@ -139,10 +140,11 @@ export default function WhatsAppPage() {
       setPhase('failed');
       return;
     }
-    // Brief pause then auto-retry
+    // Exponential backoff — give WA time to stop rate-limiting
+    const delay = Math.min(3_000 + attempt * 4_000, 15_000);
     retryRef.current = setTimeout(() => {
       if (activeRef.current) startQr(attempt + 1);
-    }, 600);
+    }, delay);
   }
 
   function cancel() {

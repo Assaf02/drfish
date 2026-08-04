@@ -74,10 +74,10 @@ export async function GET() {
         }
 
         if (connection === 'close') {
-          const isLoggedOut =
-            (lastDisconnect?.error as Boom)?.output?.statusCode === DisconnectReason.loggedOut;
+          const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
+          const isLoggedOut = statusCode === DisconnectReason.loggedOut;
           if (isLoggedOut) await clearWhatsAppSession();
-          send({ type: 'disconnected', loggedOut: isLoggedOut });
+          send({ type: 'disconnected', loggedOut: isLoggedOut, code: statusCode ?? 0 });
           clearTimeout(killTimer);
           writer.close().catch(() => {});
         }
