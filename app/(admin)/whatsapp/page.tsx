@@ -6,7 +6,7 @@ import {
   Wifi, WifiOff, Loader2, CheckCircle2, QrCode, RefreshCw, X,
 } from 'lucide-react';
 
-type Phase = 'checking' | 'idle' | 'connecting' | 'qr' | 'success' | 'failed';
+type Phase = 'checking' | 'idle' | 'connecting' | 'qr' | 'syncing' | 'success' | 'failed';
 
 const QR_WINDOW_SECONDS = 60;
 const MAX_ATTEMPTS = 6;
@@ -96,14 +96,21 @@ export default function WhatsAppPage() {
             try {
               const res  = await fetch('/api/whatsapp/status', { cache: 'no-store' });
               const data = await res.json() as { connected: boolean };
-              if (data.connected) { cleanup(); setPhase('success'); }
+              if (data.connected) {
+                clearInterval(cntdwnRef.current);
+                clearInterval(pollRef.current);
+                setPhase('syncing');
+                retryRef.current = setTimeout(() => { cleanup(); setPhase('success'); }, 4_000);
+              }
             } catch { /* ignore */ }
           }, 2_000);
         }
 
         if (msg.type === 'connected') {
-          cleanup();
-          setPhase('success');
+          clearInterval(cntdwnRef.current);
+          clearInterval(pollRef.current);
+          setPhase('syncing');
+          retryRef.current = setTimeout(() => { cleanup(); setPhase('success'); }, 4_000);
         }
 
         if (msg.type === 'disconnected' || msg.type === 'error') {
@@ -253,12 +260,14 @@ export default function WhatsAppPage() {
         </div>
       )}
 
-      {/* ── Connecting / QR ───────────────────────────────────────────────── */}
-      {(phase === 'connecting' || phase === 'qr') && (
+      {/* ── Connecting / QR / Syncing ─────────────────────────────────────── */}
+      {(phase === 'connecting' || phase === 'qr' || phase === 'syncing') && (
         <div className="card p-6 space-y-5">
           <div className="flex items-center justify-between">
             <p className="font-bold" style={{ color: 'var(--navy)' }}>
-              {phase === 'connecting' ? 'Connexion en cours…' : 'Scannez maintenant !'}
+              {phase === 'connecting' ? 'Connexion en cours…'
+                : phase === 'syncing' ? 'Synchronisation…'
+                : 'Scannez maintenant !'}
             </p>
             <button
               onClick={cancel}
@@ -281,22 +290,37 @@ export default function WhatsAppPage() {
                   </p>
                 </div>
               ) : (
-                <>
+                <div className="relative">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={qrImage!}
                     alt="QR WhatsApp"
                     className="w-44 h-44 rounded-2xl"
-                    style={{ border: '1.5px solid rgba(46,109,180,0.15)' }}
+                    style={{
+                      border: '1.5px solid rgba(46,109,180,0.15)',
+                      opacity: phase === 'syncing' ? 0.4 : 1,
+                      transition: 'opacity 0.3s',
+                    }}
                   />
+                  {phase === 'syncing' && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-2xl"
+                      style={{ background: 'rgba(255,255,255,0.7)' }}>
+                      <Loader2 size={28} className="animate-spin" style={{ color: 'var(--teal)' }} />
+                      <p className="text-xs font-semibold text-center px-2" style={{ color: 'var(--navy)' }}>
+                        Synchronisation<br />en cours…
+                      </p>
+                    </div>
+                  )}
                   {/* Countdown under QR */}
-                  <div
-                    className="mt-2 text-center text-xs font-bold"
-                    style={{ color: countdown <= 10 ? '#dc2626' : 'var(--gray-400)', transition: 'color 0.3s' }}
-                  >
-                    {countdown}s
-                  </div>
-                </>
+                  {phase === 'qr' && (
+                    <div
+                      className="mt-2 text-center text-xs font-bold"
+                      style={{ color: countdown <= 10 ? '#dc2626' : 'var(--gray-400)', transition: 'color 0.3s' }}
+                    >
+                      {countdown}s
+                    </div>
+                  )}
+                </div>
               )}
             </div>
 
@@ -350,7 +374,7 @@ export default function WhatsAppPage() {
           </div>
 
           {/* Reminder */}
-          {phase === 'qr' && (
+          {(phase === 'qr' || phase === 'syncing') && (
             <div className="rounded-xl p-3 text-xs"
               style={{ background: 'rgba(37,211,102,0.05)', border: '1px solid rgba(37,211,102,0.15)' }}>
               <p className="font-semibold mb-0.5" style={{ color: 'var(--navy)' }}>Rappel :</p>
