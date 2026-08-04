@@ -3,6 +3,19 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import makeWASocket, { DisconnectReason, fetchLatestBaileysVersion, WASocket } from '@whiskeysockets/baileys';
+
+// Cache version for the lifetime of this serverless instance
+let cachedVersion: [number, number, number] | null = null;
+async function getWAVersion(): Promise<[number, number, number]> {
+  if (cachedVersion) return cachedVersion;
+  try {
+    const { version } = await fetchLatestBaileysVersion();
+    cachedVersion = version;
+    return version;
+  } catch {
+    return [2, 3000, 1035194821];
+  }
+}
 import { useDbAuthState, clearWhatsAppSession } from '@/lib/whatsapp-auth';
 import { Boom } from '@hapi/boom';
 import pino from 'pino';
@@ -40,8 +53,7 @@ async function openWASocket(budgetMs: number): Promise<WASocket> {
   const { state, saveCreds } = await useDbAuthState();
   if (!state.creds.me) throw new Error('WA_NOT_CONNECTED');
 
-  // Use cached version to avoid a GitHub round-trip on every request
-  const version: [number, number, number] = [2, 3000, 1035194821];
+  const version = await getWAVersion();
 
   return new Promise<WASocket>((resolve, reject) => {
     const sock = makeWASocket({
