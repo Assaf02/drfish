@@ -8,7 +8,7 @@ import {
 
 type Phase = 'checking' | 'idle' | 'connecting' | 'qr' | 'success' | 'failed';
 
-const QR_WINDOW_SECONDS = 7;
+const QR_WINDOW_SECONDS = 60;
 const MAX_ATTEMPTS = 6;
 
 export default function WhatsAppPage() {
@@ -59,36 +59,44 @@ export default function WhatsAppPage() {
     const es = new EventSource('/api/whatsapp/qr');
     esRef.current = es;
 
-    let secondsLeft = QR_WINDOW_SECONDS;
-
     es.onmessage = (e) => {
       if (!activeRef.current) return;
       try {
-        const msg = JSON.parse(e.data as string) as { type: string; qrDataUrl?: string };
+        const msg = JSON.parse(e.data as string) as {
+          type: string; qrDataUrl?: string; message?: string; loggedOut?: boolean;
+        };
 
         if (msg.type === 'qr') {
+          // Close SSE immediately — we have the image, we no longer need the stream.
+          // The QR is valid on WA's side for ~60s; we poll status to catch the scan.
+          es.close();
+          esRef.current = null;
+
           setQrImage(msg.qrDataUrl ?? null);
           setPhase('qr');
-          secondsLeft = QR_WINDOW_SECONDS;
+
+          let secondsLeft = QR_WINDOW_SECONDS;
           setCountdown(secondsLeft);
 
           clearInterval(cntdwnRef.current);
           cntdwnRef.current = setInterval(() => {
             secondsLeft = Math.max(0, secondsLeft - 1);
             setCountdown(secondsLeft);
+            if (secondsLeft <= 0) {
+              // QR expired on WA side — fetch a new one
+              clearInterval(cntdwnRef.current);
+              startQr(attempt + 1);
+            }
           }, 1_000);
 
-          // Poll status every 2s — catches scan even if SSE closes before 'open' event
+          // Poll status every 2s to detect scan
           clearInterval(pollRef.current);
           pollRef.current = setInterval(async () => {
             if (!activeRef.current) return;
             try {
               const res  = await fetch('/api/whatsapp/status', { cache: 'no-store' });
               const data = await res.json() as { connected: boolean };
-              if (data.connected) {
-                cleanup();
-                setPhase('success');
-              }
+              if (data.connected) { cleanup(); setPhase('success'); }
             } catch { /* ignore */ }
           }, 2_000);
         }
@@ -99,12 +107,11 @@ export default function WhatsAppPage() {
         }
 
         if (msg.type === 'disconnected' || msg.type === 'error') {
-          const errMsg = (msg as { type: string; message?: string; loggedOut?: boolean }).message
+          const errMsg = msg.message
             ?? (msg.type === 'disconnected' ? 'WA a fermé la connexion' : 'Erreur serveur');
           setLastError(errMsg);
-          clearInterval(cntdwnRef.current);
-          clearInterval(pollRef.current);
           es.close();
+          esRef.current = null;
           scheduleRetry(attempt);
         }
       } catch { /* ignore bad JSON */ }
@@ -112,8 +119,6 @@ export default function WhatsAppPage() {
 
     es.onerror = () => {
       setLastError('Connexion SSE échouée (auth ou réseau)');
-      clearInterval(cntdwnRef.current);
-      clearInterval(pollRef.current);
       es.close();
       esRef.current = null;
       scheduleRetry(attempt);
@@ -286,8 +291,8 @@ export default function WhatsAppPage() {
                   />
                   {/* Countdown under QR */}
                   <div
-                    className="mt-1.5 text-center text-sm font-extrabold"
-                    style={{ color: countdown <= 2 ? '#dc2626' : 'var(--teal)', transition: 'color 0.3s' }}
+                    className="mt-2 text-center text-xs font-bold"
+                    style={{ color: countdown <= 10 ? '#dc2626' : 'var(--gray-400)', transition: 'color 0.3s' }}
                   >
                     {countdown}s
                   </div>
@@ -324,13 +329,13 @@ export default function WhatsAppPage() {
                         className="h-full rounded-full"
                         style={{
                           width: `${(countdown / QR_WINDOW_SECONDS) * 100}%`,
-                          background: countdown <= 2 ? '#dc2626' : 'var(--teal)',
+                          background: countdown <= 10 ? '#dc2626' : 'var(--teal)',
                           transition: 'width 1s linear, background 0.3s',
                         }}
                       />
                     </div>
-                    <p className="text-xs" style={{ color: countdown <= 2 ? '#dc2626' : 'var(--gray-400)' }}>
-                      {countdown}s restantes — scannez vite !
+                    <p className="text-xs" style={{ color: countdown <= 10 ? '#dc2626' : 'var(--gray-400)' }}>
+                      {countdown}s restantes
                     </p>
                   </div>
                   {attempts > 0 && (
