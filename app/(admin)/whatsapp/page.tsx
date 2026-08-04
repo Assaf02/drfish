@@ -17,6 +17,7 @@ export default function WhatsAppPage() {
   const [qrImage, setQrImage]   = useState<string | null>(null);
   const [countdown, setCountdown] = useState(QR_WINDOW_SECONDS);
   const [attempts, setAttempts] = useState(0);
+  const [lastError, setLastError] = useState<string | null>(null);
 
   const esRef       = useRef<EventSource | null>(null);
   const cntdwnRef   = useRef<ReturnType<typeof setInterval>>();
@@ -98,6 +99,9 @@ export default function WhatsAppPage() {
         }
 
         if (msg.type === 'disconnected' || msg.type === 'error') {
+          const errMsg = (msg as { type: string; message?: string; loggedOut?: boolean }).message
+            ?? (msg.type === 'disconnected' ? 'WA a fermé la connexion' : 'Erreur serveur');
+          setLastError(errMsg);
           clearInterval(cntdwnRef.current);
           clearInterval(pollRef.current);
           es.close();
@@ -107,6 +111,7 @@ export default function WhatsAppPage() {
     };
 
     es.onerror = () => {
+      setLastError('Connexion SSE échouée (auth ou réseau)');
       clearInterval(cntdwnRef.current);
       clearInterval(pollRef.current);
       es.close();
@@ -300,6 +305,12 @@ export default function WhatsAppPage() {
                   <p className="font-semibold" style={{ color: 'var(--navy)' }}>
                     Préparez votre caméra !
                   </p>
+                  {lastError && (
+                    <p className="text-[11px] px-2 py-1.5 rounded-lg break-all"
+                      style={{ background: 'rgba(220,38,38,0.06)', color: '#b91c1c', border: '1px solid rgba(220,38,38,0.15)' }}>
+                      {lastError}
+                    </p>
+                  )}
                 </>
               ) : (
                 <>

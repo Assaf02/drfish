@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import makeWASocket, { DisconnectReason } from '@whiskeysockets/baileys';
+import makeWASocket, { DisconnectReason, fetchLatestBaileysVersion } from '@whiskeysockets/baileys';
 import QRCode from 'qrcode';
 import pino from 'pino';
 import { useDbAuthState, clearWhatsAppSession } from '@/lib/whatsapp-auth';
@@ -31,7 +31,13 @@ export async function GET() {
       // If we reuse stale/broken creds, WA rejects the reconnect silently (no QR).
       await clearWhatsAppSession().catch(() => {});
       const { state, saveCreds } = await useDbAuthState();
-      const version: [number, number, number] = [2, 3000, 1035194821];
+
+      // Fetch latest WA version — stale hardcoded version can cause silent WA rejection
+      let version: [number, number, number] = [2, 3000, 1035194821];
+      try {
+        const { version: v } = await fetchLatestBaileysVersion();
+        version = v;
+      } catch { /* keep fallback */ }
 
       const sock = makeWASocket({
         version,
