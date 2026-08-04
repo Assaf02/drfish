@@ -137,7 +137,7 @@ export default function CampaignDetailPage() {
         if (data.status === 'wa_retry') {
           waRetryRef.current += 1;
 
-          if (data.error === 'WA_CLOSED') {
+          if (data.error?.startsWith('WA_CLOSED')) {
             // WA_CLOSED = rate-limit sur les reconnexions rapides, pas session invalide.
             // Ne jamais effacer la session. Après 5 échecs consécutifs, pause 2 min.
             if (waRetryRef.current >= 5) {
