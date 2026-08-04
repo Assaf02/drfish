@@ -511,7 +511,12 @@ function NewCampaignModal({
           validateNumbers,
         }),
       });
-      if (!res.ok) throw new Error((await res.json()).error ?? 'Erreur');
+      if (!res.ok) {
+        const text = await res.text();
+        let msg = 'Erreur serveur';
+        try { msg = (JSON.parse(text) as { error?: string }).error ?? msg; } catch { /* empty body */ }
+        throw new Error(msg);
+      }
       const data = await res.json();
       onCreated(data.id);
     } catch (e: unknown) {

@@ -54,20 +54,24 @@ export async function POST(req: NextRequest) {
   const scheduledAt = parsed.data.scheduledAt ? new Date(parsed.data.scheduledAt) : null;
   const isScheduled = scheduledAt && scheduledAt > new Date();
 
-  const campaign = await prisma.campaign.create({
-    data: {
-      name:             parsed.data.name,
-      message:          parsed.data.message,
-      baseDelaySeconds: parsed.data.baseDelaySeconds,
-      source:           parsed.data.source,
-      phones:           parsed.data.phones,
-      mediaUrl:         parsed.data.mediaUrl ?? null,
-      scheduledAt:      scheduledAt,
-      dailyLimit:       parsed.data.dailyLimit,
-      validateNumbers:  parsed.data.validateNumbers,
-      status:           isScheduled ? 'SCHEDULED' : 'DRAFT',
-    },
-  });
-
-  return NextResponse.json(campaign, { status: 201 });
+  try {
+    const campaign = await prisma.campaign.create({
+      data: {
+        name:             parsed.data.name,
+        message:          parsed.data.message,
+        baseDelaySeconds: parsed.data.baseDelaySeconds,
+        source:           parsed.data.source,
+        phones:           parsed.data.phones,
+        mediaUrl:         parsed.data.mediaUrl ?? null,
+        scheduledAt:      scheduledAt,
+        dailyLimit:       parsed.data.dailyLimit,
+        validateNumbers:  parsed.data.validateNumbers,
+        status:           isScheduled ? 'SCHEDULED' : 'DRAFT',
+      },
+    });
+    return NextResponse.json(campaign, { status: 201 });
+  } catch (err) {
+    console.error('Campaign create error:', err);
+    return NextResponse.json({ error: 'Erreur serveur lors de la création' }, { status: 500 });
+  }
 }
