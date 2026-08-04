@@ -284,12 +284,12 @@ export default function WhatsAppPage() {
                     className="w-44 h-44 rounded-2xl"
                     style={{ border: '1.5px solid rgba(46,109,180,0.15)' }}
                   />
-                  {/* Countdown badge */}
+                  {/* Countdown under QR */}
                   <div
-                    className="absolute -top-2.5 -right-2.5 w-10 h-10 rounded-xl flex items-center justify-center text-base font-extrabold text-white shadow"
-                    style={{ background: countdown <= 2 ? '#dc2626' : 'var(--teal)', transition: 'background 0.3s' }}
+                    className="mt-1.5 text-center text-sm font-extrabold"
+                    style={{ color: countdown <= 2 ? '#dc2626' : 'var(--teal)', transition: 'color 0.3s' }}
                   >
-                    {countdown}
+                    {countdown}s
                   </div>
                 </>
               )}
