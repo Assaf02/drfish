@@ -55,6 +55,11 @@ export async function GET() {
         }
 
         if (connection === 'open') {
+          // Force-save the complete in-memory state before closing the response.
+          // Baileys fires keys.set() and creds.update async — if we close the
+          // writer first, Vercel may kill the function before those DB writes land,
+          // leaving an incomplete session that causes WA_CLOSED on reconnect.
+          await saveCreds();
           send({ type: 'connected' });
           clearTimeout(killTimer);
           sock.ws.close();

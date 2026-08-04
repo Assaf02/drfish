@@ -137,7 +137,13 @@ export default function CampaignDetailPage() {
         if (data.status === 'wa_retry') {
           waRetryRef.current += 1;
           if (waRetryRef.current >= 3) {
-            toast.error(`WhatsApp instable après 3 tentatives (${data.error}) — vérifiez la connexion puis relancez`);
+            // 3x WA_CLOSED = session invalide (clés corrompues) — effacer + forcer rescan
+            if (data.error === 'WA_CLOSED') {
+              await fetch('/api/whatsapp/clear-session', { method: 'POST' }).catch(() => {});
+              toast.error('Session WhatsApp expirée — reconnectez sur la page WhatsApp puis relancez');
+            } else {
+              toast.error('WhatsApp instable — reconnectez sur la page WhatsApp puis relancez');
+            }
             stopSending();
             await fetch(`/api/campaigns/${id}/stop`, { method: 'POST' }).catch(() => {});
             fetchCampaign();
