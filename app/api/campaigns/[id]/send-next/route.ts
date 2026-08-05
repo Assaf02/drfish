@@ -232,7 +232,7 @@ export async function POST(
   } catch (err) {
     sendError = (err instanceof Error ? err.message : String(err)).slice(0, 200);
   } finally {
-    sock.ev.removeAllListeners();
+    (sock.ev as unknown as { removeAllListeners(): void }).removeAllListeners();
     try { sock.ws.close(); } catch { /* ignore */ }
   }
 
