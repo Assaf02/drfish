@@ -413,6 +413,7 @@ function NewCampaignModal({
   const [delay,           setDelay]           = useState(12);
   const [phones,          setPhones]          = useState<string[]>([]);
   const [dbCount,         setDbCount]         = useState<number | null>(null);
+  const [loadingDb,       setLoadingDb]       = useState(false);
   const [saving,          setSaving]          = useState(false);
   const [dragOver,        setDragOver]        = useState(false);
   const [mediaUrl,        setMediaUrl]        = useState('');
@@ -577,31 +578,58 @@ function NewCampaignModal({
               Source des destinataires
             </label>
             <div className="grid grid-cols-2 gap-2">
-              {([
-                { v: 'DB_CLIENTS', icon: <Users size={14} />,    label: 'Clients Dr Fish',   sub: 'Ayant déjà commandé' },
-                { v: 'IMPORTED',   icon: <FileText size={14} />,  label: 'Importer une liste', sub: 'CSV / texte' },
-              ] as const).map(({ v, icon, label, sub }) => (
-                <button
-                  key={v}
-                  type="button"
-                  onClick={() => setSource(v)}
-                  className="flex items-start gap-2 p-3 rounded-xl border text-left transition-all"
-                  style={{
-                    borderColor:  source === v ? 'var(--blue)' : 'var(--gray-100)',
-                    background:   source === v ? 'rgba(46,109,180,0.05)' : 'white',
-                  }}
-                >
-                  <span className="mt-0.5" style={{ color: source === v ? 'var(--blue)' : 'var(--gray-400)' }}>
-                    {icon}
-                  </span>
-                  <div>
-                    <p className="text-xs font-semibold" style={{ color: source === v ? 'var(--navy)' : 'var(--gray-400)' }}>
-                      {label}
-                    </p>
-                    <p className="text-[10px] mt-0.5" style={{ color: 'var(--gray-400)' }}>{sub}</p>
-                  </div>
-                </button>
-              ))}
+              <button
+                type="button"
+                onClick={async () => {
+                  setLoadingDb(true);
+                  try {
+                    const res = await fetch('/api/campaigns?getClientPhones=1');
+                    const data = await res.json() as { phones: string[] };
+                    if (data.phones.length === 0) { toast.error('Aucun client avec un numéro trouvé'); return; }
+                    setPhones(data.phones);
+                    setSource('IMPORTED');
+                    toast.success(`${data.phones.length} numéros chargés depuis la base`);
+                  } catch { toast.error('Erreur lors du chargement'); }
+                  finally { setLoadingDb(false); }
+                }}
+                className="flex items-start gap-2 p-3 rounded-xl border text-left transition-all"
+                style={{
+                  borderColor: source === 'DB_CLIENTS' ? 'var(--blue)' : 'var(--gray-100)',
+                  background:  source === 'DB_CLIENTS' ? 'rgba(46,109,180,0.05)' : 'white',
+                  opacity: loadingDb ? 0.6 : 1,
+                }}
+              >
+                <span className="mt-0.5" style={{ color: 'var(--blue)' }}>
+                  {loadingDb ? <Loader2 size={14} className="animate-spin" /> : <Users size={14} />}
+                </span>
+                <div>
+                  <p className="text-xs font-semibold" style={{ color: 'var(--navy)' }}>
+                    Clients Dr Fish
+                  </p>
+                  <p className="text-[10px] mt-0.5" style={{ color: 'var(--gray-400)' }}>
+                    {dbCount != null ? `${dbCount} clients` : 'Ayant commandé'}
+                  </p>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSource('IMPORTED')}
+                className="flex items-start gap-2 p-3 rounded-xl border text-left transition-all"
+                style={{
+                  borderColor: source === 'IMPORTED' ? 'var(--blue)' : 'var(--gray-100)',
+                  background:  source === 'IMPORTED' ? 'rgba(46,109,180,0.05)' : 'white',
+                }}
+              >
+                <span className="mt-0.5" style={{ color: source === 'IMPORTED' ? 'var(--blue)' : 'var(--gray-400)' }}>
+                  <FileText size={14} />
+                </span>
+                <div>
+                  <p className="text-xs font-semibold" style={{ color: source === 'IMPORTED' ? 'var(--navy)' : 'var(--gray-400)' }}>
+                    Importer une liste
+                  </p>
+                  <p className="text-[10px] mt-0.5" style={{ color: 'var(--gray-400)' }}>CSV / texte</p>
+                </div>
+              </button>
             </div>
           </div>
 

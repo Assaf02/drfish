@@ -29,6 +29,24 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ clientCount });
   }
 
+  // ?getClientPhones=1 — return normalized phone list for campaign pre-fill
+  if (req.nextUrl.searchParams.get('getClientPhones') === '1') {
+    const clients = await prisma.client.findMany({
+      where: { phone: { not: null }, sales: { some: {} } },
+      select: { phone: true },
+    });
+    const seen = new Set<string>();
+    const phones: string[] = [];
+    for (const c of clients) {
+      const raw = c.phone!.replace(/\D/g, '');
+      if (!raw || raw.length < 8) continue;
+      let n = raw;
+      if (raw.length === 8) n = `229${raw}`;
+      if (!seen.has(n)) { seen.add(n); phones.push(n); }
+    }
+    return NextResponse.json({ phones });
+  }
+
   const campaigns = await prisma.campaign.findMany({
     orderBy: { createdAt: 'desc' },
     select: {
