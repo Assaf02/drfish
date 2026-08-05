@@ -69,7 +69,7 @@ async function openWASocket(budgetMs: number): Promise<WASocket> {
     sock.ev.on('creds.update', saveCreds);
 
     const timeout = setTimeout(() => {
-      sock.ev.removeAllListeners();
+      (sock.ev as unknown as { removeAllListeners(): void }).removeAllListeners();
       try { sock.ws.close(); } catch { /* ignore */ }
       reject(new Error('WA_TIMEOUT'));
     }, Math.min(budgetMs - 200, 7_500));
@@ -77,7 +77,7 @@ async function openWASocket(budgetMs: number): Promise<WASocket> {
     sock.ev.on('connection.update', async ({ connection, lastDisconnect, qr }) => {
       if (qr) {
         clearTimeout(timeout);
-        sock.ev.removeAllListeners();
+        (sock.ev as unknown as { removeAllListeners(): void }).removeAllListeners();
         try { sock.ws.close(); } catch { /* ignore */ }
         await clearWhatsAppSession().catch(() => {});
         reject(new Error('WA_QR_NEEDED'));
@@ -92,7 +92,7 @@ async function openWASocket(budgetMs: number): Promise<WASocket> {
         const isLoggedOut = statusCode === DisconnectReason.loggedOut;
         console.error(`WA close code=${statusCode} err=${lastDisconnect?.error?.message ?? '?'}`);
         if (isLoggedOut) await clearWhatsAppSession().catch(() => {});
-        sock.ev.removeAllListeners();
+        (sock.ev as unknown as { removeAllListeners(): void }).removeAllListeners();
         reject(new Error(isLoggedOut ? 'WA_LOGGED_OUT' : `WA_CLOSED:${statusCode ?? 0}`));
       }
     });
